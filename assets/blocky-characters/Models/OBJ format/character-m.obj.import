@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cs0x8q6xvcour"
+path="res://.godot/imported/character-m.obj-96e09359207e6aff1c8a1c168e254636.mesh"
+
+[deps]
+
+files=["res://.godot/imported/character-m.obj-96e09359207e6aff1c8a1c168e254636.mesh"]
+
+source_file="res://assets/blocky-characters/Models/OBJ format/character-m.obj"
+dest_files=["res://.godot/imported/character-m.obj-96e09359207e6aff1c8a1c168e254636.mesh", "res://.godot/imported/character-m.obj-96e09359207e6aff1c8a1c168e254636.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

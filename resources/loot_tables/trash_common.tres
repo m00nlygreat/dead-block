@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="LootTable" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/loot_table.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/loot_entry.gd" id="2"]
+
+[sub_resource type="Resource" id="e1"]
+script = ExtResource("2")
+item_id = "food_canned"
+weight = 25.0
+qty_max = 2
+
+[sub_resource type="Resource" id="e2"]
+script = ExtResource("2")
+item_id = "food_choco"
+weight = 25.0
+qty_max = 3
+
+[sub_resource type="Resource" id="e3"]
+script = ExtResource("2")
+item_id = "scrap_metal"
+weight = 20.0
+
+[sub_resource type="Resource" id="e4"]
+script = ExtResource("2")
+item_id = "cloth"
+weight = 25.0
+qty_max = 3
+
+[sub_resource type="Resource" id="e5"]
+script = ExtResource("2")
+item_id = "weapon_bat"
+weight = 10.0
+
+[resource]
+script = ExtResource("1")
+entries = [SubResource("e1"), SubResource("e2"), SubResource("e3"), SubResource("e4"), SubResource("e5")]
+roll_count_min = 1
+roll_count_max = 2

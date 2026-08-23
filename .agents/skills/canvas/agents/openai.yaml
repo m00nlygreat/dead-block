@@ -1,0 +1,4 @@
+interface:
+  display_name: "Canvas"
+  short_description: "Preview local Markdown files with live reload"
+  default_prompt: "Use $canvas to open this local Markdown file in a live-reloading browser preview."

@@ -1,0 +1,56 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/player.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/blocky-characters/Models/GLB format/character-a.glb" id="2"]
+[ext_resource type="Script" path="res://scripts/player/swing_trail.gd" id="3"]
+
+[sub_resource type="CapsuleShape3D" id="shape"]
+radius = 0.35
+height = 1.3
+
+[sub_resource type="SphereShape3D" id="interact_shape"]
+radius = 2.0
+
+[sub_resource type="CylinderMesh" id="blob_mesh"]
+top_radius = 0.55
+bottom_radius = 0.55
+height = 0.01
+
+[sub_resource type="StandardMaterial3D" id="blob_mat"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0, 0, 0, 0.4)
+no_depth_test = false
+
+[node name="Player" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 5
+motion_mode = 1
+script = ExtResource("1")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, 0)
+shape = SubResource("shape")
+
+[node name="InteractArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 8
+
+[node name="InteractShape" type="CollisionShape3D" parent="InteractArea"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("interact_shape")
+
+[node name="SwingTrail" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+cast_shadow = 0
+script = ExtResource("3")
+
+[node name="ContactShadow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, 0)
+cast_shadow = 0
+mesh = SubResource("blob_mesh")
+surface_material_override/0 = SubResource("blob_mat")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="CharacterA" parent="Model" instance=ExtResource("2")]

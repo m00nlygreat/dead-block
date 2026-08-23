@@ -1,0 +1,27 @@
+[gd_scene load_steps=5 format=3]
+
+[sub_resource type="StandardMaterial3D" id="wood"]
+albedo_color = Color(0.62, 0.42, 0.24, 1)
+roughness = 0.8
+
+[sub_resource type="CylinderMesh" id="shaft"]
+top_radius = 0.05
+bottom_radius = 0.035
+height = 0.85
+
+[sub_resource type="CylinderMesh" id="knob"]
+top_radius = 0.075
+bottom_radius = 0.06
+height = 0.09
+
+[node name="BatModel" type="Node3D"]
+
+[node name="Shaft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.47, 0)
+mesh = SubResource("shaft")
+surface_material_override/0 = SubResource("wood")
+
+[node name="Knob" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.045, 0)
+mesh = SubResource("knob")
+surface_material_override/0 = SubResource("wood")

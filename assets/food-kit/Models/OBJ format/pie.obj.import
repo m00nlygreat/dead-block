@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://dct1wd7cucyxn"
+path="res://.godot/imported/pie.obj-b1ab746dd2dcad56d02af34757e4ec15.mesh"
+
+[deps]
+
+files=["res://.godot/imported/pie.obj-b1ab746dd2dcad56d02af34757e4ec15.mesh"]
+
+source_file="res://assets/food-kit/Models/OBJ format/pie.obj"
+dest_files=["res://.godot/imported/pie.obj-b1ab746dd2dcad56d02af34757e4ec15.mesh", "res://.godot/imported/pie.obj-b1ab746dd2dcad56d02af34757e4ec15.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

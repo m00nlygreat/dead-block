@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "skills": {
+    "canvas": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "canvas/SKILL.md",
+      "computedHash": "78c83d4a871d4788f4bc22e8e9a22ee092ba765eb40e27703da0fb1500506840"
+    },
+    "deck-author": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "deck-author/SKILL.md",
+      "computedHash": "792e949a28ba92088cea8a90c92acd4e0f5c367056cf7e5c65dd071e7a80e62b"
+    },
+    "deck-reviewer": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "deck-reviewer/SKILL.md",
+      "computedHash": "52367db8c6ea5f0e06dc166e6a5ab50262ad69b01edbe6be522f1c0ba5882333"
+    },
+    "design": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "design/SKILL.md",
+      "computedHash": "27dd37878489705da127a140af7ffe0aa8efeb6ff5b0f7776f4e8a81a552eb86"
+    },
+    "extract-eml-attachments": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "extract-eml-attachments/SKILL.md",
+      "computedHash": "6ff358254ebe6cae8870351233f9eb2b435bd9c08d7e79567bab243e5fe7c0a9"
+    },
+    "gd-sync": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "gd-sync/SKILL.md",
+      "computedHash": "d4e5e2a6579e03c8ec6d28600f701bca6138a3cf997bf76fab1e940ff6a3fdca"
+    },
+    "ia": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "ia/SKILL.md",
+      "computedHash": "e46bb665e41bedc220f2cf53cd5efd1177f26e2a8473bbb46cf006b01ee7d743"
+    },
+    "interact": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "interact/SKILL.md",
+      "computedHash": "2adcb719c96ebfa81d1a984a59a6338c4f5b3d38a407003a398cd53f2f86dbda"
+    },
+    "ppt2pdf": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "ppt2pdf/SKILL.md",
+      "computedHash": "bb2c04bc95c1fb1de8cdba0278765647d8496c4d556ed1e3f4cc3533303ffcd1"
+    },
+    "ssaju": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "ssaju/SKILL.md",
+      "computedHash": "467de0a8739a40d5d75b399e3a07e1956969c0591d865f0cf7eea0de8c4c4863"
+    },
+    "startup-advisor": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "startup-advisor/SKILL.md",
+      "computedHash": "23da291fb151ee1e8f1c5b23821e64c6100aa725c24a7e0da439375212d7f427"
+    },
+    "stn": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "stn/SKILL.md",
+      "computedHash": "68de578ce0a5ce34fd354e4a77bf2083cd6363cc6ca44ded9957980fc9964b65"
+    },
+    "survey-advisor": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "survey-advisor/SKILL.md",
+      "computedHash": "e48158f725d18467a794c72451240a4d86c87c27608b244531f460dd3e49bced"
+    },
+    "tiki-taka": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "tiki-taka/SKILL.md",
+      "computedHash": "34d2b4ebbf57c82283d440f8f39f2bf91afad8bc96738300eb646cd0815c6884"
+    },
+    "unexplain": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "unexplain/SKILL.md",
+      "computedHash": "71b8e0e5171dbb4a256ee6a9e64afb6db35fb150353499f5445d31a8ad64e901"
+    },
+    "wiki": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "wiki/SKILL.md",
+      "computedHash": "edeb5c7ebb202040d2df8418004281d1938578cec8605998b179dd30fb1f8139"
+    },
+    "wireframe": {
+      "source": "m00nlygreat/picky-skills",
+      "sourceType": "github",
+      "skillPath": "wireframe/SKILL.md",
+      "computedHash": "d353395ef5ae59253b7f575cf772476b2f3d676272412907e3b4732ccbcabb50"
+    }
+  }
+}

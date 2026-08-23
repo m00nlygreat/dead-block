@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://b4lbe7g7m667m"
+path="res://.godot/imported/loungeSofaCorner.obj-0a1d3f125f4ba15c3787f20836c0a35e.mesh"
+
+[deps]
+
+files=["res://.godot/imported/loungeSofaCorner.obj-0a1d3f125f4ba15c3787f20836c0a35e.mesh"]
+
+source_file="res://assets/furniture-kit/Models/OBJ format/loungeSofaCorner.obj"
+dest_files=["res://.godot/imported/loungeSofaCorner.obj-0a1d3f125f4ba15c3787f20836c0a35e.mesh", "res://.godot/imported/loungeSofaCorner.obj-0a1d3f125f4ba15c3787f20836c0a35e.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

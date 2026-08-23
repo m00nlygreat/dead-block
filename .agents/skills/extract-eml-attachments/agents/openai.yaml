@@ -1,0 +1,4 @@
+interface:
+  display_name: "Extract EML Attachments"
+  short_description: "Extract attachments from .eml files with Python."
+  default_prompt: "Use $extract-eml-attachments to extract attachments from the .eml files in this folder."

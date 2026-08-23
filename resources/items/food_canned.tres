@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "food_canned"
+display_name = "통조림"
+item_type = 1
+rarity = 0
+weight = 0.5
+max_stack = 5
+description = "오래가는 비상식량."
+hunger_restore = 35.0
+consume_time = 2.2
+durability = 3
+

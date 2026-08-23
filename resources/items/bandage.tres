@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "bandage"
+display_name = "밴디지"
+item_type = 2
+rarity = 1
+weight = 0.1
+max_stack = 10
+description = "상처를 감싼다."
+heal_amount = 25.0
+consume_time = 1.8
+durability = 1
+

@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://dwjqkkkccn3i4"
+path="res://.godot/imported/cross-column.obj-5659cce2a982e8abcdf945063e758883.mesh"
+
+[deps]
+
+files=["res://.godot/imported/cross-column.obj-5659cce2a982e8abcdf945063e758883.mesh"]
+
+source_file="res://assets/graveyard-kit/Models/OBJ format/cross-column.obj"
+dest_files=["res://.godot/imported/cross-column.obj-5659cce2a982e8abcdf945063e758883.mesh", "res://.godot/imported/cross-column.obj-5659cce2a982e8abcdf945063e758883.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

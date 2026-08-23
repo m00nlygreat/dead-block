@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://6kceh8hsk84j"
+path="res://.godot/imported/construction-fence.obj-ea58a1500aa6d1d561014f3cb456b05d.mesh"
+
+[deps]
+
+files=["res://.godot/imported/construction-fence.obj-ea58a1500aa6d1d561014f3cb456b05d.mesh"]
+
+source_file="res://assets/city-kit-roads/Models/OBJ format/construction-fence.obj"
+dest_files=["res://.godot/imported/construction-fence.obj-ea58a1500aa6d1d561014f3cb456b05d.mesh", "res://.godot/imported/construction-fence.obj-ea58a1500aa6d1d561014f3cb456b05d.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

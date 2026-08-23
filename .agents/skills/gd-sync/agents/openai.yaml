@@ -1,0 +1,4 @@
+interface:
+  display_name: "Google Drive Sync"
+  short_description: "Push or pull folders safely with Google Drive"
+  default_prompt: "Use $gd-sync to synchronize this folder immediately with its configured Google Drive folder."

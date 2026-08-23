@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "cloth"
+display_name = "천 조각"
+item_type = 3
+rarity = 0
+weight = 0.2
+max_stack = 20
+description = "뜯어낸 옷감."
+

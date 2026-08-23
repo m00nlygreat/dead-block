@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cj8r28wscrx4l"
+path="res://.godot/imported/bread.obj-cbeadb849a01e92886a613a2d0c0c9a2.mesh"
+
+[deps]
+
+files=["res://.godot/imported/bread.obj-cbeadb849a01e92886a613a2d0c0c9a2.mesh"]
+
+source_file="res://assets/food-kit/Models/OBJ format/bread.obj"
+dest_files=["res://.godot/imported/bread.obj-cbeadb849a01e92886a613a2d0c0c9a2.mesh", "res://.godot/imported/bread.obj-cbeadb849a01e92886a613a2d0c0c9a2.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

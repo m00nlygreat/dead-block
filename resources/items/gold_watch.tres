@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "gold_watch"
+display_name = "금시계"
+item_type = 5
+rarity = 4
+weight = 0.4
+max_stack = 3
+description = "누군가의 추억. 비싸게 팔린다."
+

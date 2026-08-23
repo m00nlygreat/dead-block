@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "food_choco"
+display_name = "초콜릿바"
+item_type = 1
+rarity = 0
+weight = 0.15
+max_stack = 10
+description = "녹아서 뭉쳤다."
+hunger_restore = 20.0
+consume_time = 1.2
+durability = 2
+

@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bklvatwftrhwq"
+path="res://.godot/imported/suv-luxury.obj-8858735a1d1570c842746f9e69e7062f.mesh"
+
+[deps]
+
+files=["res://.godot/imported/suv-luxury.obj-8858735a1d1570c842746f9e69e7062f.mesh"]
+
+source_file="res://assets/car-kit/Models/OBJ format/suv-luxury.obj"
+dest_files=["res://.godot/imported/suv-luxury.obj-8858735a1d1570c842746f9e69e7062f.mesh", "res://.godot/imported/suv-luxury.obj-8858735a1d1570c842746f9e69e7062f.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

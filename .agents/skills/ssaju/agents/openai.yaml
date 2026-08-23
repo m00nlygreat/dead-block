@@ -1,0 +1,4 @@
+interface:
+  display_name: "ssaju"
+  short_description: "Use golbin/ssaju for Korean saju and manselyeok calculations."
+  default_prompt: "Use $ssaju to calculate a saju chart from birth date, time, gender, and calendar inputs."

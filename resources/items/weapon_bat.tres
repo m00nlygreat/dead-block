@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "weapon_bat"
+display_name = "야구배트"
+item_type = 0
+rarity = 1
+weight = 1.2
+max_stack = 3
+description = "전통의 야구배트. 두 마리까지 한 번에 쓸어담는다."
+damage = 30.0
+reach = 2.6
+arc_deg = 100.0
+max_targets = 2
+durability = 25
+attack_cooldown = 0.75

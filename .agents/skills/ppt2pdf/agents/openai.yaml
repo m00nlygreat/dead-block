@@ -1,0 +1,4 @@
+interface:
+  display_name: "Batch PPT to PDF"
+  short_description: "Convert PowerPoint decks to PDFs in batches."
+  default_prompt: "Use $ppt2pdf to convert the PowerPoint decks in this folder to PDF."

@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="wf-generated" content="">
+  <title>Wireframe Viewer</title>
+  <style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:#c8d0db;color:#1b1f24;font-size:14px}
+button{font:inherit}
+.app{display:flex;height:100vh;overflow:hidden}
+.nav{width:236px;flex:0 0 auto;background:#fff;border-right:1px solid #d0d7e0;display:flex;flex-direction:column}
+.nav-head{padding:16px 14px 12px;border-bottom:1px solid #d0d7e0}
+.brand{font-weight:800;font-size:15px}
+.sub{margin-top:3px;color:#68707c;font-size:11px}
+.nav-list{overflow:auto;padding:8px}
+.group{margin:14px 6px 5px;color:#68707c;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.nav-btn{width:100%;border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:7px;cursor:pointer;color:#1b1f24}
+.nav-btn:hover{background:#f0f4f8}
+.nav-btn.active{background:#e8f0ff;color:#2563eb;font-weight:700}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{height:52px;flex:0 0 auto;background:#fff;border-bottom:1px solid #d0d7e0;display:flex;align-items:center;gap:12px;padding:8px 14px}
+.doc-meta{flex:1;min-width:0}
+.doc-title{font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-path{font-size:11px;color:#68707c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.controls{display:flex;align-items:center;gap:8px}
+.seg{display:flex;border:1px solid #d0d7e0;border-radius:7px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:5px 10px;cursor:pointer}
+.seg button.active{background:#1b1f24;color:#fff}
+.size-readout{min-width:88px;color:#68707c;font-size:11px;text-align:right;font-variant-numeric:tabular-nums}
+.work{flex:1;min-height:0;display:flex;gap:10px;padding:12px;overflow:hidden}
+.canvas{flex:1;min-width:0;overflow:auto;border:1px solid #d0d7e0;border-radius:8px;background:#c8d0db;cursor:default;scrollbar-width:none;-ms-overflow-style:none}
+.canvas::-webkit-scrollbar{width:0;height:0}
+.canvas.space-pan{cursor:grab}
+.canvas.panning{cursor:grabbing;user-select:none}
+.canvas.resizing{user-select:none}
+.stage{position:relative;min-width:2200px;min-height:1800px}
+.frame{position:absolute;width:1600px;min-height:680px;background:#fff;border:1px solid #c0cad8;border-radius:8px;box-shadow:0 4px 32px rgba(0,0,0,.15);overflow:hidden;transform-origin:top left}
+.frame.component{padding:18px}
+.resize-handle{position:absolute;z-index:50;background:transparent;touch-action:none}
+.resize-handle.e,.resize-handle.w{top:0;bottom:0;width:12px;cursor:ew-resize}
+.resize-handle.e{right:0}
+.resize-handle.w{left:0}
+.resize-handle.n,.resize-handle.s{left:0;right:0;height:12px;cursor:ns-resize}
+.resize-handle.n{top:0}
+.resize-handle.s{bottom:0}
+.resize-handle.nw,.resize-handle.ne,.resize-handle.se,.resize-handle.sw{width:18px;height:18px}
+.resize-handle.nw{top:0;left:0;cursor:nwse-resize}
+.resize-handle.ne{top:0;right:0;cursor:nesw-resize}
+.resize-handle.se{right:0;cursor:nwse-resize}
+.resize-handle.sw{left:0;cursor:nesw-resize}
+.resize-handle.se,.resize-handle.sw{bottom:0}
+.resize-handle:hover,.resize-handle.active{background:rgba(37,99,235,.10)}
+.source{width:310px;flex:0 0 auto;background:#fff;border:1px solid #d0d7e0;border-radius:8px;display:flex;flex-direction:column;overflow:hidden}
+.source-label{padding:9px 12px;border-bottom:1px solid #d0d7e0;color:#68707c;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.source pre{margin:0;padding:12px;overflow:auto;white-space:pre-wrap;word-break:break-word;font-family:"Cascadia Code",Consolas,monospace;font-size:11.5px;line-height:1.55}
+
+.wf-screen{min-height:680px;background:#fff;display:flex;flex-direction:column}
+.wf-header{height:58px;flex:0 0 auto;background:#f5f7fa;border-bottom:1.5px solid #dde3ec;display:flex;align-items:center;gap:10px;padding:0 16px}
+.wf-icon{width:24px;height:24px;border-radius:5px;background:#c0cad8;flex:0 0 auto}
+.wf-logo{background:#1b1f24;color:#fff;border-radius:5px;padding:6px 10px;font-size:12px;font-weight:850;letter-spacing:.03em}
+.wf-search{height:38px;min-width:190px;flex:1;border:1.5px solid #c0cad8;border-radius:19px;background:#fff;display:flex;align-items:center;gap:8px;padding:0 13px;color:#9aa4b2;font-size:13px}
+.wf-search::before{content:"";width:13px;height:13px;border:2px solid #9aa4b2;border-radius:50%;display:block;box-shadow:8px 8px 0 -6px #9aa4b2}
+.wf-button{height:36px;border:0;border-radius:7px;background:#2563eb;color:#fff;padding:0 14px;font-weight:700;font-size:12px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+.wf-button.secondary{background:#fff;color:#3c4452;border:1.5px solid #c0cad8}
+.wf-shell{flex:1;min-height:0;display:grid;grid-template-columns:200px minmax(0,1fr) 320px;overflow:hidden}
+.wf-sidebar{background:#f5f7fa;border-right:1.5px solid #dde3ec;padding:12px;display:flex;flex-direction:column;gap:10px}
+.wf-nav-lines{display:flex;flex-direction:column;gap:8px}
+.wf-nav-line{height:28px;border-radius:6px;background:#e4e9f0}
+.wf-badge{align-self:flex-start;min-width:28px;height:22px;border-radius:999px;background:#e8f0ff;color:#2563eb;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;padding:0 8px}
+.wf-workspace{min-width:0;display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto}
+.wf-pane{min-width:0;background:#fafbfc;border-left:1.5px solid #dde3ec;padding:12px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+.wf-toolbar{min-height:56px;border:1.5px solid #dde3ec;border-radius:8px;background:#fff;display:flex;align-items:center;gap:10px;padding:10px 12px;flex-wrap:wrap}
+.wf-toolbar-title{font-size:16px;font-weight:800;margin-right:auto}
+.wf-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}
+.wf-tabs{min-height:36px;border:1.5px solid #dde3ec;border-radius:8px;background:#f5f7fa;padding:3px;display:flex;gap:4px;align-items:center}
+.wf-tab{height:28px;min-width:72px;border-radius:6px;background:#dde3ec}
+.wf-tab.active{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.wf-section{border:1.5px dashed #c0cad8;border-radius:8px;background:#fafbfc;padding:12px;display:flex;flex-direction:column;gap:10px}
+.wf-section-label{font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.06em;color:#8892a4}
+.wf-title{font-size:18px;font-weight:850;line-height:1.25}
+.wf-text{font-size:14px;color:#3c4452;line-height:1.45}
+.wf-caption{font-size:12px;color:#68707c;line-height:1.35}
+.wf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.wf-card{background:#fff;border:1.5px solid #dde3ec;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:12px;display:flex;flex-direction:column;gap:8px}
+.wf-list{background:#fff;border:1.5px solid #dde3ec;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.wf-list-row{min-height:48px;border-bottom:1px solid #eef2f6;display:flex;align-items:center;gap:10px;padding:8px 12px}
+.wf-list-row:last-child{border-bottom:0}
+.wf-dot{width:8px;height:8px;border-radius:50%;background:#c0cad8}
+.wf-avatar{width:52px;height:52px;border-radius:50%;background:#dde3ec;border:1.5px solid #c0cad8}
+.wf-chip{display:inline-flex;align-items:center;height:22px;border-radius:999px;background:#e8f0ff;color:#2563eb;padding:0 8px;font-size:11px;font-weight:800}
+.wf-check{width:18px;height:18px;border-radius:4px;border:2px solid #c0cad8;background:#fff;flex:0 0 auto}
+.wf-table{background:#fff;border:1.5px solid #dde3ec;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.wf-table-row{display:grid;grid-template-columns:40px 1.4fr 1fr 1fr 112px 44px;gap:10px;align-items:center;min-height:48px;padding:8px 12px;border-bottom:1px solid #eef2f6}
+.wf-table-row:last-child{border-bottom:0}
+.wf-table-row.header{background:#f5f7fa;font-weight:800;color:#68707c;font-size:12px}
+.wf-footer{height:42px;border-top:1.5px solid #dde3ec;background:#f5f7fa;display:flex;align-items:center;justify-content:space-between;padding:0 14px}
+.wf-placeholder{height:14px;max-width:220px;border-radius:999px;background:#dde3ec}
+.wf-mobile-flow{display:none;border-top:1px dashed #c0cad8;padding:12px;gap:10px;background:#fafbfc}
+.wf-step{height:42px;border-radius:8px;background:#fff;border:1px solid #dde3ec;display:flex;align-items:center;justify-content:center;color:#68707c;font-weight:700}
+.mobile .wf-shell{grid-template-columns:1fr}
+.mobile .wf-sidebar,.mobile .wf-pane{display:none}
+.mobile .wf-mobile-flow{display:flex;flex-direction:column}
+.mobile .wf-table-row{grid-template-columns:28px 1fr 76px}
+.mobile .wf-table-row>*:nth-child(n+4){display:none}
+  </style>
+  <style id="wf-generated-style"></style>
+</head>
+<body>
+<div class="app">
+  <aside class="nav">
+    <div class="nav-head">
+      <div class="brand">Wireframe Viewer</div>
+      <div class="sub">Direct STN prototype</div>
+    </div>
+    <div class="nav-list" id="nav"></div>
+  </aside>
+  <main class="main">
+    <div class="top">
+      <div class="doc-meta">
+        <div class="doc-title" id="doc-title"></div>
+        <div class="doc-path" id="doc-path"></div>
+      </div>
+      <div class="controls">
+        <div class="seg">
+          <button id="desktop" class="active" type="button">Desktop</button>
+          <button id="mobile" type="button">Mobile</button>
+          <button id="fit" type="button">Fit</button>
+        </div>
+        <span class="size-readout" id="size-label">1600 x 680px</span>
+      </div>
+    </div>
+    <div class="work">
+      <section class="canvas" id="canvas"><div class="stage" id="stage"><div class="frame" id="frame"></div></div></section>
+      <aside class="source"><div class="source-label">STN Source</div><pre id="source"></pre></aside>
+    </div>
+  </main>
+</div>
+
+<script id="wf-docs-tpl" type="application/json">[]</script>
+<script id="wf-data" type="application/json">[]</script>
+<script>
+const docs=JSON.parse(document.getElementById('wf-docs-tpl').textContent);
+const nav=document.getElementById('nav');
+const canvas=document.getElementById('canvas');
+const stage=document.getElementById('stage');
+const frame=document.getElementById('frame');
+const source=document.getElementById('source');
+const title=document.getElementById('doc-title');
+const pathEl=document.getElementById('doc-path');
+const desktop=document.getElementById('desktop');
+const mobile=document.getElementById('mobile');
+const fit=document.getElementById('fit');
+const sizeLabel=document.getElementById('size-label');
+const DEFAULT_DESKTOP_WIDTH=1600;
+const DEFAULT_MOBILE_WIDTH=390;
+const DEFAULT_FRAME_HEIGHT=680;
+const MIN_FRAME_WIDTH=360;
+const MAX_FRAME_WIDTH=2560;
+const MIN_FRAME_HEIGHT=480;
+const MAX_FRAME_HEIGHT=2200;
+let current=docs.findIndex(d=>d.kind==='screen');
+let currentMode='desktop';
+let zoom=1;
+let spaceDown=false;
+let panning=false;
+let resizing=null;
+let panStartX=0,panStartY=0,scrollStartX=0,scrollStartY=0;
+if(current<0)current=0;
+function label(kind){return kind==='global'?'Global':kind==='screen'?'Screens':'Components'}
+function clamp(value,min,max){return Math.max(min,Math.min(max,value))}
+function updateSizeLabel(){
+  sizeLabel.textContent=Math.round(frame.offsetWidth)+' x '+Math.round(frame.offsetHeight)+'px';
+}
+function setFrameSize(nextWidth,nextHeight){
+  const width=clamp(Math.round(nextWidth),MIN_FRAME_WIDTH,MAX_FRAME_WIDTH);
+  const height=clamp(Math.round(nextHeight),MIN_FRAME_HEIGHT,MAX_FRAME_HEIGHT);
+  frame.style.width=width+'px';
+  frame.style.minHeight=height+'px';
+  setMode(width<560?'mobile':'desktop');
+  updateSizeLabel();
+  return {width:frame.offsetWidth,height:frame.offsetHeight};
+}
+function addResizeHandles(){
+  ['n','w','e','s','nw','ne','sw','se'].forEach(edge=>{
+    const handle=document.createElement('div');
+    handle.className='resize-handle '+edge;
+    handle.dataset.edge=edge;
+    handle.setAttribute('aria-hidden','true');
+    frame.appendChild(handle);
+  });
+}
+function renderNav(){
+  nav.innerHTML='';
+  ['global','screen','component'].forEach(kind=>{
+    const items=docs.map((d,i)=>({d,i})).filter(x=>x.d.kind===kind);
+    if(!items.length)return;
+    const g=document.createElement('div');g.className='group';g.textContent=label(kind);nav.appendChild(g);
+    items.forEach(({d,i})=>{
+      const b=document.createElement('button');b.className='nav-btn';b.type='button';b.textContent=d.name;b.dataset.index=i;
+      b.addEventListener('click',()=>select(i));nav.appendChild(b);
+    });
+  });
+}
+function select(i){
+  const d=docs[i];
+  if(!d){
+    title.textContent='No design files found';pathEl.textContent='';source.textContent='';
+    frame.className='frame';frame.innerHTML='<div class="wf-screen"><div class="wf-workspace"><div class="wf-section"><div class="wf-section-label">Empty</div><div class="wf-text">No STN documents were provided.</div></div></div></div>';
+    addResizeHandles();
+    updateSizeLabel();
+    requestAnimationFrame(centerFrame);
+    return;
+  }
+  current=i;title.textContent=d.name;pathEl.textContent=d.path;source.textContent=d.source;
+  frame.className=['frame',d.kind==='component'?'component':'',d.frameClass||'',currentMode==='mobile'?'mobile':''].filter(Boolean).join(' ');
+  frame.dataset.docKind=d.kind||'';
+  frame.innerHTML=d.html;
+  addResizeHandles();
+  updateSizeLabel();
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.index)===i));
+  requestAnimationFrame(centerFrame);
+}
+function setMode(mode){
+  currentMode=mode;
+  frame.classList.toggle('mobile',mode==='mobile');
+  desktop.classList.toggle('active',mode==='desktop');
+  mobile.classList.toggle('active',mode==='mobile');
+}
+function placeFrame(){
+  const scaledW=frame.offsetWidth*zoom;
+  const scaledH=frame.offsetHeight*zoom;
+  const left=Math.max(600,(stage.clientWidth-scaledW)/2);
+  const top=Math.max(420,(stage.clientHeight-scaledH)/2);
+  frame.style.left=left+'px';
+  frame.style.top=top+'px';
+  frame.style.transform='scale('+zoom+')';
+}
+function centerFrame(){
+  placeFrame();
+  const x=frame.offsetLeft+(frame.offsetWidth*zoom-canvas.clientWidth)/2;
+  const y=frame.offsetTop+(frame.offsetHeight*zoom-canvas.clientHeight)/2;
+  canvas.scrollLeft=Math.max(0,x);
+  canvas.scrollTop=Math.max(0,y);
+}
+function fitFrame(){
+  zoom=Math.max(.35,Math.min(1,(canvas.clientWidth-88)/frame.offsetWidth,(canvas.clientHeight-88)/frame.offsetHeight));
+  centerFrame();
+}
+function zoomAt(nextZoom,cx,cy){
+  const oldZoom=zoom;
+  const oldLeft=frame.offsetLeft;
+  const oldTop=frame.offsetTop;
+  const worldX=(canvas.scrollLeft+cx-oldLeft)/oldZoom;
+  const worldY=(canvas.scrollTop+cy-oldTop)/oldZoom;
+  zoom=Math.max(.25,Math.min(3,nextZoom));
+  placeFrame();
+  canvas.scrollLeft=frame.offsetLeft+worldX*zoom-cx;
+  canvas.scrollTop=frame.offsetTop+worldY*zoom-cy;
+}
+desktop.addEventListener('click',()=>{zoom=1;setFrameSize(DEFAULT_DESKTOP_WIDTH,DEFAULT_FRAME_HEIGHT);centerFrame()});
+mobile.addEventListener('click',()=>{zoom=1;setFrameSize(DEFAULT_MOBILE_WIDTH,DEFAULT_FRAME_HEIGHT);centerFrame()});
+fit.addEventListener('click',fitFrame);
+frame.addEventListener('pointerdown',e=>{
+  const handle=e.target.closest('.resize-handle');
+  if(!handle)return;
+  e.preventDefault();
+  e.stopPropagation();
+  const edge=handle.dataset.edge;
+  resizing={
+    edge,
+    handle,
+    startX:e.clientX,
+    startY:e.clientY,
+    startWidth:frame.offsetWidth,
+    startHeight:frame.offsetHeight,
+    startLeft:frame.offsetLeft,
+    startTop:frame.offsetTop
+  };
+  handle.classList.add('active');
+  canvas.classList.add('resizing');
+  frame.setPointerCapture?.(e.pointerId);
+});
+window.addEventListener('pointermove',e=>{
+  if(!resizing)return;
+  e.preventDefault();
+  const dx=(e.clientX-resizing.startX)/zoom;
+  const dy=(e.clientY-resizing.startY)/zoom;
+  let nextWidth=resizing.startWidth;
+  let nextHeight=resizing.startHeight;
+  if(resizing.edge.includes('e'))nextWidth=resizing.startWidth+dx;
+  if(resizing.edge.includes('w'))nextWidth=resizing.startWidth-dx;
+  if(resizing.edge.includes('s'))nextHeight=resizing.startHeight+dy;
+  if(resizing.edge.includes('n'))nextHeight=resizing.startHeight-dy;
+  const size=setFrameSize(nextWidth,nextHeight);
+  if(resizing.edge.includes('w'))frame.style.left=(resizing.startLeft+(resizing.startWidth-size.width))+'px';
+  if(resizing.edge.includes('n'))frame.style.top=(resizing.startTop+(resizing.startHeight-size.height))+'px';
+});
+window.addEventListener('pointerup',()=>{
+  if(!resizing)return;
+  resizing.handle.classList.remove('active');
+  canvas.classList.remove('resizing');
+  resizing=null;
+});
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){
+    e.preventDefault();
+    if(e.repeat)return;
+    spaceDown=true;
+    if(!panning)canvas.classList.add('space-pan');
+  }
+},{capture:true});
+window.addEventListener('keyup',e=>{if(e.code==='Space'){spaceDown=false;canvas.classList.remove('space-pan')}});
+canvas.addEventListener('mousedown',e=>{
+  if(e.target.closest('.resize-handle'))return;
+  if((e.button===0&&spaceDown)||e.button===1){
+    e.preventDefault();
+    panning=true;panStartX=e.clientX;panStartY=e.clientY;scrollStartX=canvas.scrollLeft;scrollStartY=canvas.scrollTop;
+    canvas.classList.remove('space-pan');canvas.classList.add('panning');
+  }
+});
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  if(spaceDown)return;
+  const rect=canvas.getBoundingClientRect();
+  const factor=e.deltaY<0?1.1:.9;
+  zoomAt(zoom*factor,e.clientX-rect.left,e.clientY-rect.top);
+},{passive:false});
+window.addEventListener('mousemove',e=>{if(panning){canvas.scrollLeft=scrollStartX-(e.clientX-panStartX);canvas.scrollTop=scrollStartY-(e.clientY-panStartY)}});
+window.addEventListener('mouseup',()=>{if(panning){panning=false;canvas.classList.remove('panning');if(spaceDown)canvas.classList.add('space-pan')}});
+canvas.addEventListener('auxclick',e=>{if(e.button===1)e.preventDefault()});
+window.addEventListener('resize',placeFrame);
+renderNav();
+select(current);
+</script>
+</body>
+</html>
