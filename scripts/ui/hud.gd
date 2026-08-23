@@ -1,12 +1,18 @@
 extends CanvasLayer
 
 const SLOT_COUNT := 20
+const HEAD_OFFSET := 2.15
+const BAR_GAP := 6.0
 
 var _player: Node = null
 var _hp_connected := false
 var _slot_labels: Array = []
 var _hotbar_panels: Array = []
 var _game_over := false
+var _slot_sb_normal: StyleBoxFlat
+var _slot_sb_selected: StyleBoxFlat
+var _coin_label: Label
+var _material_label: Label
 
 @onready var _prompt: Label = $Root/Prompt
 @onready var _bar: ProgressBar = $Root/SearchBar
@@ -25,6 +31,16 @@ var _game_over := false
 
 
 func _ready() -> void:
+	_slot_sb_normal = StyleBoxFlat.new()
+	_slot_sb_normal.bg_color = Color(0.12, 0.12, 0.15, 0.85)
+	_slot_sb_normal.set_corner_radius_all(6)
+	_slot_sb_normal.set_border_width_all(2)
+	_slot_sb_normal.border_color = Color(0.38, 0.38, 0.44)
+	_slot_sb_selected = StyleBoxFlat.new()
+	_slot_sb_selected.bg_color = Color(0.30, 0.24, 0.06, 0.95)
+	_slot_sb_selected.set_corner_radius_all(6)
+	_slot_sb_selected.set_border_width_all(3)
+	_slot_sb_selected.border_color = Color(1.0, 0.85, 0.3)
 	for i in SLOT_COUNT:
 		var l := Label.new()
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -34,6 +50,7 @@ func _ready() -> void:
 	for i in InventoryManager.HOTBAR_SIZE:
 		var p := Panel.new()
 		p.custom_minimum_size = Vector2(60, 60)
+		p.add_theme_stylebox_override("panel", _slot_sb_normal)
 		var num := Label.new()
 		num.text = str(i + 1)
 		num.position = Vector2(4, 1)
@@ -65,15 +82,51 @@ func _ready() -> void:
 		_hotbar.add_child(p)
 		_hotbar_panels.append(p)
 	InventoryManager.inventory_changed.connect(_refresh_inventory)
+	InventoryManager.inventory_changed.connect(_refresh_materials)
 	InventoryManager.item_gained.connect(_on_item_gained)
 	InventoryManager.weapon_changed.connect(_refresh_weapon)
 	InventoryManager.hotbar_changed.connect(_refresh_hotbar)
 	InventoryManager.selected_changed.connect(func(_i: int) -> void: _refresh_hotbar())
+	GameState.coins_changed.connect(_on_coins_changed)
+	_coin_label = Label.new()
+	_coin_label.position = Vector2(20, 14)
+	_coin_label.add_theme_font_size_override("font_size", 28)
+	_coin_label.self_modulate = Color(1.0, 0.85, 0.35)
+	$Root.add_child(_coin_label)
+	_material_label = Label.new()
+	_material_label.anchor_top = 1.0
+	_material_label.anchor_bottom = 1.0
+	_material_label.offset_left = 20
+	_material_label.offset_right = 900
+	_material_label.offset_top = -222
+	_material_label.offset_bottom = -192
+	_material_label.add_theme_font_size_override("font_size", 18)
+	_material_label.self_modulate = Color(0.8, 0.85, 1.0)
+	$Root.add_child(_material_label)
 	_add_bar_label(_hunger_bar, "허기")
 	_add_bar_label(_thirst_bar, "갈증")
 	_refresh_inventory()
 	_refresh_weapon()
 	_refresh_hotbar()
+	_on_coins_changed(GameState.coins)
+	_refresh_materials()
+
+
+func _on_coins_changed(total: int) -> void:
+	if _coin_label != null:
+		_coin_label.text = "코인 %d" % total
+
+
+func _refresh_materials() -> void:
+	var parts: Array[String] = []
+	for id in InventoryManager.get_material_ids():
+		var item = ItemDB.get_item(id)
+		if item != null:
+			parts.append("%s ×%d" % [item.display_name, InventoryManager.count_of(id)])
+	if parts.size() > 0:
+		_material_label.text = "재료: " + "  ".join(parts)
+	else:
+		_material_label.text = ""
 
 
 func _add_bar_label(bar: ProgressBar, txt: String) -> void:
@@ -96,9 +149,9 @@ func _refresh_hotbar() -> void:
 	for i in InventoryManager.HOTBAR_SIZE:
 		var p: Panel = _hotbar_panels[i]
 		if i == InventoryManager.selected_slot:
-			p.self_modulate = Color(1.0, 0.85, 0.3)
+			p.add_theme_stylebox_override("panel", _slot_sb_selected)
 		else:
-			p.self_modulate = Color.WHITE
+			p.add_theme_stylebox_override("panel", _slot_sb_normal)
 		var name_label: Label = p.get_child(1)
 		var count_label: Label = p.get_child(2)
 		var dur_bar: ProgressBar = p.get_child(3)
@@ -177,19 +230,30 @@ func _process(_delta: float) -> void:
 	elif _player.is_searching():
 		_prompt.text = "수색 중..."
 	elif _player.get_selected_consumable() != null:
-		_prompt.text = "[우클릭 홀드] %s 사용" % _player.get_selected_consumable().display_name
+		_prompt.text = "[E 홀드] %s 사용" % _player.get_selected_consumable().display_name
 	else:
 		_prompt.text = ""
 	_bar.visible = _player.is_searching()
 	if _bar.visible:
+		_place_above_head(_bar)
 		_bar.value = _player.get_search_ratio()
 	_use_bar.visible = _player.is_consuming()
 	if _use_bar.visible:
+		_place_above_head(_use_bar)
 		_use_bar.value = _player.get_consume_ratio()
 
 	if Input.is_action_just_pressed("inventory"):
 		_panel.visible = not _panel.visible
 		_refresh_inventory()
+
+
+func _place_above_head(bar: Control) -> void:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null or _player == null:
+		bar.visible = false
+		return
+	var head_screen: Vector2 = cam.unproject_position(_player.global_position + Vector3.UP * HEAD_OFFSET)
+	bar.position = head_screen + Vector2(-bar.size.x * 0.5, -bar.size.y - BAR_GAP)
 
 
 func _on_player_died() -> void:
@@ -203,6 +267,7 @@ func _restart() -> void:
 	_hp_connected = false
 	_player = null
 	InventoryManager.reset_run()
+	GameState.reset_run_state()
 	get_tree().reload_current_scene()
 
 

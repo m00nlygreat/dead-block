@@ -34,7 +34,7 @@ func total_weight() -> float:
 	return w
 
 
-func add_item(id: String, qty: int = 1) -> int:
+func add_item(id: String, qty: int = 1, initial_durability := -1) -> int:
 	var item = ItemDB.get_item(id)
 	if item == null or qty <= 0:
 		return 0
@@ -56,13 +56,32 @@ func add_item(id: String, qty: int = 1) -> int:
 		item_gained.emit(id, added)
 		_register_hotbar(id)
 		if not durabilities.has(id):
-			durabilities[id] = item.durability
-		if item.is_weapon() and equipped_weapon_id == "":
-			equip(id)
+			var start_dur: int = item.durability
+			if initial_durability >= 0:
+				start_dur = mini(initial_durability, item.durability)
+			durabilities[id] = start_dur
+		_sync_equipped_with_selection()
 	return added
 
 
+func is_hotbar_item(item) -> bool:
+	return item != null and (item.is_weapon() or item.is_consumable())
+
+
+func get_material_ids() -> Array:
+	var out: Array = []
+	for s in slots:
+		if s == null or out.has(s["id"]):
+			continue
+		var it = ItemDB.get_item(s["id"])
+		if not is_hotbar_item(it):
+			out.append(s["id"])
+	return out
+
+
 func _register_hotbar(id: String) -> void:
+	if not is_hotbar_item(ItemDB.get_item(id)):
+		return
 	if count_of(id) <= 0 or quick_slots.has(id):
 		return
 	for i in HOTBAR_SIZE:
@@ -89,7 +108,15 @@ func equip(id: String) -> void:
 	if count_of(id) <= 0:
 		return
 	equipped_weapon_id = id
-	equipped_durability = item.durability
+	equipped_durability = int(durabilities[id]) if durabilities.has(id) else item.durability
+	weapon_changed.emit()
+
+
+func unequip() -> void:
+	if equipped_weapon_id == "":
+		return
+	equipped_weapon_id = ""
+	equipped_durability = 0
 	weapon_changed.emit()
 
 
@@ -104,11 +131,11 @@ func weapon_used() -> void:
 	if item == null:
 		return
 	equipped_durability -= 1
+	durabilities[equipped_weapon_id] = equipped_durability
 	if equipped_durability <= 0:
 		remove_one_of(equipped_weapon_id)
-		equipped_weapon_id = ""
-		equipped_durability = 0
-	weapon_changed.emit()
+	else:
+		weapon_changed.emit()
 
 
 func use_durability(id: String) -> void:
@@ -136,11 +163,7 @@ func get_current_durability(id: String) -> int:
 	var item = ItemDB.get_item(id)
 	if item == null or item.durability <= 0:
 		return -1
-	if item.is_weapon():
-		return equipped_durability if equipped_weapon_id == id else item.durability
-	if not durabilities.has(id):
-		return item.durability
-	return int(durabilities[id])
+	return equipped_durability if equipped_weapon_id == id else int(durabilities.get(id, item.durability))
 
 
 func remove_one_of(id: String) -> void:
@@ -149,17 +172,26 @@ func remove_one_of(id: String) -> void:
 		if s != null and s["id"] == id:
 			remove_at(i, 1)
 			_unregister_if_empty(id)
-			return
+			break
+	if id == equipped_weapon_id and count_of(id) <= 0:
+		unequip()
 
 
 func set_selected(index: int) -> void:
 	selected_slot = clampi(index, 0, HOTBAR_SIZE - 1)
 	selected_changed.emit(selected_slot)
-	var id = quick_slots[selected_slot]
-	if id != null:
+	_sync_equipped_with_selection()
+
+
+func _sync_equipped_with_selection() -> void:
+	var id := get_selected_id()
+	if id != "":
 		var item = ItemDB.get_item(id)
-		if item != null and item.is_weapon() and equipped_weapon_id != id:
-			equip(id)
+		if item != null and item.is_weapon() and count_of(id) > 0:
+			if equipped_weapon_id != id:
+				equip(id)
+			return
+	unequip()
 
 
 func cycle_selected(dir: int) -> void:
@@ -171,12 +203,17 @@ func get_selected_id() -> String:
 	return id if id != null else ""
 
 
-func drop_selected() -> String:
+func drop_selected_data() -> Dictionary:
 	var id := get_selected_id()
 	if id == "" or count_of(id) <= 0:
-		return ""
+		return {}
+	var left := get_current_durability(id)
 	remove_one_of(id)
-	return id
+	return {"id": id, "qty": 1, "durability": left}
+
+
+func drop_selected() -> String:
+	return String(drop_selected_data().get("id", ""))
 
 
 func remove_at(index: int, qty: int = 1) -> void:

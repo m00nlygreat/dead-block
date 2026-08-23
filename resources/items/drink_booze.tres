@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "drink_booze"
+display_name = "주류"
+item_type = 1
+rarity = 1
+weight = 0.6
+max_stack = 5
+description = "개봉 전이라면 다행."
+thirst_restore = 25.0
+consume_time = 1.8
+durability = 1

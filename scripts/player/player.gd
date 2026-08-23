@@ -90,6 +90,24 @@ func _ready() -> void:
 	_refresh_weapon_visual()
 
 
+const ACTIONS_TO_RELEASE := [
+	"move_up", "move_down", "move_left", "move_right",
+	"sprint", "interact", "attack", "aim", "inventory", "reload", "dodge",
+]
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		if DisplayServer.get_name() == "headless":
+			return
+		_release_all_actions()
+
+
+func _release_all_actions() -> void:
+	for a in ACTIONS_TO_RELEASE:
+		Input.action_release(a)
+
+
 func _refresh_weapon_visual() -> void:
 	var item = InventoryManager.get_equipped_item()
 	var want_bat: bool = item != null and item.is_weapon()
@@ -137,7 +155,7 @@ func _physics_process(delta: float) -> void:
 			var regen := STAMINA_REGEN * (STARVED_STAMINA_REGEN_MULT if hunger <= 0.0 else 1.0)
 			stamina = minf(stamina + regen * delta, max_stamina)
 	var sprinting := want_sprint
-	var aiming := Input.is_action_pressed("aim") and get_selected_consumable() == null
+	var aiming := Input.is_action_pressed("aim")
 
 	var target_vel := dir * _move_speed(sprinting, dir)
 	if eating:
@@ -272,13 +290,13 @@ func _update_survival(delta: float) -> void:
 
 func _update_consuming(delta: float) -> void:
 	if not is_consuming():
-		if Input.is_action_just_pressed("aim"):
+		if Input.is_action_just_pressed("interact") and get_interact_target() == null:
 			_try_start_consume()
 		return
-	var valid := Input.is_action_pressed("aim") \
+	var valid := Input.is_action_pressed("interact") \
 		and InventoryManager.get_selected_id() == _consume_id \
 		and get_selected_consumable() != null
-	if not valid or is_searching():
+	if not valid:
 		_cancel_consume()
 		return
 	_consume_progress += delta
@@ -362,12 +380,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _drop_selected() -> void:
-	var id := InventoryManager.drop_selected()
-	if id == "":
+	var data := InventoryManager.drop_selected_data()
+	if data.is_empty():
 		return
 	var pk := PICKUP_SCENE.instantiate()
-	pk.item_id = id
+	pk.item_id = data["id"]
 	pk.qty = 1
+	pk.durability_left = int(data["durability"])
 	get_parent().add_child(pk)
 	var ang := randf() * TAU
 	pk.global_position = global_position + Vector3(cos(ang) * 0.9, 0.0, sin(ang) * 0.9)
@@ -458,15 +477,19 @@ func get_interact_target() -> Node:
 		candidates.append(a)
 
 	var best: Node = null
-	var best_d := INF
+	var best_key := Vector2(INF, INF)
 	for obj in candidates:
 		if obj == null or not obj.has_method("can_interact"):
 			continue
 		if not obj.can_interact():
 			continue
+		var prio := 0
+		if obj.has_method("interact_priority"):
+			prio = obj.interact_priority()
 		var d: float = global_position.distance_to(obj.global_position)
-		if d < best_d:
-			best_d = d
+		var key := Vector2(float(-prio), d)
+		if key < best_key:
+			best_key = key
 			best = obj
 	return best
 

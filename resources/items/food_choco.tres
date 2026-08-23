@@ -13,5 +13,5 @@ max_stack = 10
 description = "녹아서 뭉쳤다."
 hunger_restore = 20.0
 consume_time = 1.2
-durability = 2
+durability = 1
 

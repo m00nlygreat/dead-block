@@ -9,6 +9,20 @@ var unlocked_perks: Array[String] = []
 var best_extraction_value: int = 0
 var run_active: bool = false
 
+signal coins_changed(total: int)
+var coins: int = 0
+
+
+func add_coins(amount: int) -> void:
+	coins += amount
+	coins_changed.emit(coins)
+
+
+func reset_run_state() -> void:
+	if coins != 0:
+		coins = 0
+		coins_changed.emit(coins)
+
 
 func add_scrap(amount: int) -> void:
 	scrap += amount

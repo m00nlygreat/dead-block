@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "drink_soda"
+display_name = "탄산음료"
+item_type = 1
+rarity = 1
+weight = 0.4
+max_stack = 10
+description = "탄산이 아직 살아 있다."
+thirst_restore = 35.0
+consume_time = 1.2
+durability = 1

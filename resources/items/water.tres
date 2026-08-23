@@ -13,5 +13,5 @@ max_stack = 5
 description = "깨끗한 물."
 thirst_restore = 45.0
 consume_time = 1.5
-durability = 4
+durability = 1
 

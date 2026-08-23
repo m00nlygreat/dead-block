@@ -3,6 +3,8 @@ extends CharacterBody3D
 
 signal died(zombie: Zombie)
 
+const COIN_SCENE := preload("res://scenes/items/coin_pickup.tscn")
+
 enum State { IDLE, WANDER, CHASE, ATTACK, DEAD }
 
 const PERCEPTION_INTERVAL := 0.2
@@ -141,11 +143,18 @@ func _die() -> void:
 	set_deferred("collision_mask", 0)
 	velocity = Vector3.ZERO
 	died.emit(self)
+	_drop_coin()
 	if _anim != null and _anim.has_animation("die"):
 		_current_anim = ""
 		_play("die")
 	var t := get_tree().create_timer(1.8)
 	t.timeout.connect(queue_free)
+
+
+func _drop_coin() -> void:
+	var coin := COIN_SCENE.instantiate()
+	coin.position = global_position + Vector3(randf_range(-0.4, 0.4), 0.2, randf_range(-0.4, 0.4))
+	get_parent().add_child.call_deferred(coin)
 
 
 func _perceive() -> void:

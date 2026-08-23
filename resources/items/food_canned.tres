@@ -13,5 +13,5 @@ max_stack = 5
 description = "오래가는 비상식량."
 hunger_restore = 35.0
 consume_time = 2.2
-durability = 3
+durability = 1
 

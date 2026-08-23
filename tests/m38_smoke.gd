@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 
 const PLAYER_SCENE := preload("res://scenes/player/player.tscn")
 
@@ -60,9 +60,9 @@ func _run() -> void:
 	var dur0 := InventoryManager.get_current_durability("water")
 	player.thirst = 20.0
 	var tb: float = player.thirst
-	Input.action_press("aim")
+	Input.action_press("interact")
 	await _ticks(_hold_frames(1.5))
-	Input.action_release("aim")
+	Input.action_release("interact")
 	await _ticks(2)
 	print("T3_DRINK_USES_DURABILITY: ",
 		player.thirst > tb + 30.0 and InventoryManager.count_of("water") == 2
@@ -70,9 +70,9 @@ func _run() -> void:
 		" (thirst %.1f->%.1f, qty=2, dur %d->%d)" % [tb, player.thirst, dur0, InventoryManager.get_current_durability("water")])
 
 	InventoryManager.set_selected(widx)
-	Input.action_press("aim")
+	Input.action_press("interact")
 	await _ticks(30)
-	Input.action_release("aim")
+	Input.action_release("interact")
 	await _ticks(2)
 	print("T4_CANCEL_PARTIAL_HOLD: ",
 		InventoryManager.count_of("water") == 2
@@ -89,22 +89,22 @@ func _run() -> void:
 
 	player.thirst = 15.0
 	InventoryManager.set_selected(widx)
-	Input.action_press("aim")
+	Input.action_press("interact")
 	await _ticks(5)
 	Input.action_press("move_up")
 	var pb: Vector3 = player.global_position
 	await _ticks(60)
 	var d_eat: float = player.global_position.distance_to(pb)
 	Input.action_release("move_up")
-	Input.action_release("aim")
+	Input.action_release("interact")
 	await _ticks(2)
 	print("T5_SLOW_WHILE_CONSUMING: ", d_eat > 0.1 and d_eat < d_norm * 0.7,
 		" (%.2f vs %.2f)" % [d_norm, d_eat])
 
 	for k in 3:
-		Input.action_press("aim")
+		Input.action_press("interact")
 		await _ticks(_hold_frames(1.5))
-		Input.action_release("aim")
+		Input.action_release("interact")
 		await _ticks(2)
 	var dur_final := InventoryManager.get_current_durability("water")
 	print("T6_UNIT_BREAKS_RESETS_DURABILITY: ",
@@ -115,9 +115,9 @@ func _run() -> void:
 	var bidx := InventoryManager.quick_slots.find("bandage")
 	InventoryManager.set_selected(bidx)
 	player.hp = 40.0
-	Input.action_press("aim")
+	Input.action_press("interact")
 	await _ticks(_hold_frames(1.8))
-	Input.action_release("aim")
+	Input.action_release("interact")
 	await _ticks(2)
 	print("T7_BANDAGE_HEALS_AND_GONE: ",
 		player.hp > 40.0 and InventoryManager.count_of("bandage") == 0,

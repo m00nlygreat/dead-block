@@ -13,5 +13,5 @@ max_stack = 5
 description = "통증을 잊게 해준다."
 heal_amount = 50.0
 consume_time = 1.5
-durability = 2
+durability = 1
 
