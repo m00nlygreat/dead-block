@@ -2,6 +2,9 @@
 .godot/
 *.translation
 
+# Build artifacts (rebuilt by CI on GitHub Actions)
+build/
+
 # System
 *.tmp
 .DS_Store

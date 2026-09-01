@@ -18,6 +18,8 @@ GameState="*res://autoload/game_state.gd"
 ItemDB="*res://autoload/item_db.gd"
 InventoryManager="*res://autoload/inventory_manager.gd"
 NoiseSystem="*res://autoload/noise_system.gd"
+UpgradeManager="*res://autoload/upgrade_manager.gd"
+DebugConsole="*res://autoload/debug_console.gd"
 
 [display]
 

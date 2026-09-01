@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="UpgradeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/upgrade_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "up_salvage"
+display_name = "재활용"
+description = "좀비 격파 시 10% 확률로 스크랩 +1 (메타 재화, 사망해도 보존)."
+max_level = 1
+cost = 30
+weight = 4.0
+effect_id = "salvage"
+values = Array[float]([1.0])

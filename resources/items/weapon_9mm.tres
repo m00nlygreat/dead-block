@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "weapon_9mm"
+display_name = "9mm 권총"
+item_type = 0
+rarity = 2
+weight = 1.0
+max_stack = 1
+description = "원거리 권총(장탄 14). 조준 후 발사하며 10% 확률로 헤드샷 즉사."
+damage = 30.0
+reach = 30.0
+arc_deg = 0.0
+max_targets = 1
+durability = 14
+attack_cooldown = 0.35
+knockback = 1.5
+stagger_time = 0.25
+is_ranged = true
+headshot_chance = 0.1
+projectile_speed = 40.0

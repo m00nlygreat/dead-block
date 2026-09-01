@@ -1,5 +1,12 @@
 extends RefCounted
 
+## 차량·집 수색 시 아이템이 나오지 않을 확률. 수색 대상이 늘어난 만큼
+## 블록당 기대 룻 수(≈2.5)를 유지하도록 산정했다.
+## 차량 ≈2.5개/블록 × (1-0.5) + 집 ≈4.3개/블록 × (1-0.7) ≈ 2.5.
+const CAR_EMPTY_CHANCE := 0.5
+const HOUSE_EMPTY_CHANCE := 0.7
+const HOUSE_LOOT_SCRIPT := preload("res://scripts/world/house_loot.gd")
+
 
 static func build(ctx: Dictionary) -> void:
 	var rng: RandomNumberGenerator = ctx["rng"]
@@ -30,6 +37,7 @@ static func build(ctx: Dictionary) -> void:
 				house.rotation.y = PI * 0.5
 		parent.add_child(house)
 		add_house_collider(house)
+		add_house_loot(house, ctx["tables"][rng.randi_range(0, ctx["tables"].size() - 1)], HOUSE_EMPTY_CHANCE)
 		placed.append("house:%.2f:%.2f:%.2f" % [house.position.x, house.position.z, house.rotation.y])
 	var trees := rng.randi_range(pattern["tree_range"].x, pattern["tree_range"].y)
 	for i in trees:
@@ -39,6 +47,7 @@ static func build(ctx: Dictionary) -> void:
 		tree.position = Vector3(rect.position.x + rng.randf_range(2.0, rect.size.x - 2.0), 0, rect.position.y + rng.randf_range(2.0, rect.size.y - 2.0))
 		tree.rotation.y = rng.randf() * TAU
 		placed.append("tree:%.2f:%.2f" % [tree.position.x, tree.position.z])
+		_add_tree_zone(parent, tree)
 	var want_cars := rng.randi_range(pattern["car_count"].x, pattern["car_count"].y)
 	if want_cars > 0:
 		var sides: Array = []
@@ -71,10 +80,21 @@ static func build(ctx: Dictionary) -> void:
 					rot = 0.0 if rng.randf() < 0.5 else PI
 			var car: Node3D = ctx["car_scene"].instantiate()
 			car.loot_table = ctx["tables"][rng.randi_range(0, ctx["tables"].size() - 1)]
+			car.empty_chance = CAR_EMPTY_CHANCE
 			parent.add_child(car)
 			car.global_position = pos
 			car.rotation.y = rot
 			placed.append("car:%.2f:%.2f:%.2f" % [pos.x, pos.z, rot])
+
+
+static func _add_tree_zone(parent: Node3D, tree: Node3D) -> void:
+	var zone := Node3D.new()
+	zone.set_script(preload("res://scripts/world/tree_zone.gd"))
+	parent.add_child(zone)
+	zone.global_position = tree.global_position
+	var ab := merged_aabb(tree)
+	# 수관 폭의 절반 + 여유. 너무 좁으면 장애물로 느껴지지 않아 하한을 둔다.
+	zone.radius = clampf(maxf(ab.size.x, ab.size.z) * 0.5 + 0.3, 0.8, 3.0)
 
 
 static func _add_base(parent: Node3D, rect: Rect2) -> void:
@@ -121,3 +141,28 @@ static func add_house_collider(house: Node3D) -> void:
 	body.add_child(cs)
 	house.add_child(body)
 	cs.position = ab.get_center()
+
+
+## 집을 수색 컨테이너로 만든다. 집의 병합 AABB를 그대로 상호작용 범위로 쓰고,
+## 콜라이더는 world 레이어 1(이동 차단)과 별개로 interactable 레이어 4에만 실어
+## 플레이어 이동을 막지 않는다. 수색 완료는 라벨 대신 건물 그레이스케일로 표시한다.
+static func add_house_loot(house: Node3D, loot_table: LootTable, empty_chance: float) -> void:
+	var ab := merged_aabb(house)
+	if ab.size.length() < 0.1:
+		return
+	var body := StaticBody3D.new()
+	body.collision_layer = 8
+	body.collision_mask = 0
+	body.set_script(HOUSE_LOOT_SCRIPT)
+	body.loot_table = loot_table
+	body.empty_chance = empty_chance
+	var cs := CollisionShape3D.new()
+	cs.name = "CollisionShape3D"
+	var bs := BoxShape3D.new()
+	bs.size = ab.size
+	cs.shape = bs
+	body.add_child(cs)
+	var center: Vector3 = ab.get_center()
+	body.position = center
+	cs.position = Vector3.ZERO
+	house.add_child(body)

@@ -12,7 +12,6 @@ const TREE_SCENE := preload("res://assets/city-kit-suburban/Models/GLB format/tr
 const CAR_SCENE := preload("res://scenes/world/car_trunk.tscn")
 const TABLES := [
 	preload("res://resources/loot_tables/trash_common.tres"),
-	preload("res://resources/loot_tables/med_cabinet.tres"),
 ]
 const RoadChunk := preload("res://scripts/world/stage_gen/road_chunk.gd")
 const BlockChunk := preload("res://scripts/world/stage_gen/block_chunk.gd")

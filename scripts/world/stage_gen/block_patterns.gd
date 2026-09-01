@@ -7,7 +7,7 @@ const PATTERNS := [
 		"house_slots": [[0, 0.25], [0, 0.75], [1, 0.25], [1, 0.75], [2, 0.25], [2, 0.75], [3, 0.25], [3, 0.75]],
 		"tree_range": Vector2i(0, 3),
 		"car_sides": [0, 1, 2, 3],
-		"car_count": Vector2i(0, 2),
+		"car_count": Vector2i(2, 4),
 	},
 	{
 		"id": "row_houses",
@@ -15,7 +15,7 @@ const PATTERNS := [
 		"house_slots": [[0, 0.3], [0, 0.7], [2, 0.3], [2, 0.7]],
 		"tree_range": Vector2i(2, 6),
 		"car_sides": [1, 3],
-		"car_count": Vector2i(0, 2),
+		"car_count": Vector2i(2, 3),
 	},
 	{
 		"id": "courtyard",
@@ -23,7 +23,7 @@ const PATTERNS := [
 		"house_slots": [[0, 0.3], [0, 0.7], [1, 0.5], [3, 0.5]],
 		"tree_range": Vector2i(2, 4),
 		"car_sides": [2],
-		"car_count": Vector2i(0, 1),
+		"car_count": Vector2i(1, 2),
 	},
 	{
 		"id": "park",
@@ -39,7 +39,7 @@ const PATTERNS := [
 		"house_slots": [],
 		"tree_range": Vector2i(0, 1),
 		"car_sides": [1, 3],
-		"car_count": Vector2i(3, 5),
+		"car_count": Vector2i(4, 6),
 	},
 ]
 

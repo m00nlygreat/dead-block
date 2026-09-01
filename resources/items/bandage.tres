@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 id = "bandage"
-display_name = "밴디지"
+display_name = "붕대"
 item_type = 2
 rarity = 1
 weight = 0.1

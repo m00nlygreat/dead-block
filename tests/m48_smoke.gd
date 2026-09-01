@@ -28,7 +28,7 @@ func _run() -> void:
 
 	InventoryManager.add_item("weapon_bat")
 	await _ticks(3)
-	print("T1_EQUIPPED_FRESH: ", InventoryManager.equipped_weapon_id == "weapon_bat" and InventoryManager.equipped_durability == 25)
+	print("T1_EQUIPPED_FRESH: ", InventoryManager.equipped_weapon_id == "weapon_bat" and InventoryManager.equipped_durability == 40)
 
 	InventoryManager.equipped_durability = 13
 	player._drop_selected()

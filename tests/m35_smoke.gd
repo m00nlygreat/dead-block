@@ -32,7 +32,7 @@ func _run() -> void:
 	await _ticks(5)
 
 	print("T5_BAT_AUTOEQUIP: ", InventoryManager.add_item("weapon_bat", 1) == 1 and InventoryManager.equipped_weapon_id == "weapon_bat")
-	print("T5_DURABILITY: ", InventoryManager.equipped_durability == 25)
+	print("T5_DURABILITY: ", InventoryManager.equipped_durability == 40)
 
 	player.global_position = Vector3.ZERO
 	player.rotation.y = -PI * 0.5
@@ -55,7 +55,7 @@ func _run() -> void:
 		if is_instance_valid(z) and z.hp < z.max_hp:
 			hit_count += 1
 	print("T6_TWO_TARGETS_HIT: ", hit_count == 2, " HITS: ", hit_count)
-	print("T6_DURABILITY_DECREMENTED: ", InventoryManager.equipped_durability == 24)
+	print("T6_DURABILITY_DECREMENTED: ", InventoryManager.equipped_durability == 39)
 
 	InventoryManager.equipped_durability = 1
 	var z4: Zombie = ZOMBIE_SCENE.instantiate()

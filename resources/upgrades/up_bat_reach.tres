@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="UpgradeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/upgrade_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "up_bat_reach"
+display_name = "배트 연장"
+description = "야구배트 사거리 +0.4m. 배트 장착 중에만 적용."
+max_level = 3
+cost = 12
+weight = 8.0
+effect_id = "bat_reach"
+values = Array[float]([0.4, 0.4, 0.4])

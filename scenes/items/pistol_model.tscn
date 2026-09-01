@@ -1,0 +1,39 @@
+[gd_scene load_steps=7 format=3]
+
+[sub_resource type="StandardMaterial3D" id="frame"]
+albedo_color = Color(0.23, 0.23, 0.25, 1)
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="barrel"]
+albedo_color = Color(0.33, 0.33, 0.36, 1)
+roughness = 0.4
+
+[sub_resource type="StandardMaterial3D" id="grip"]
+albedo_color = Color(0.29, 0.2, 0.15, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="body_mesh"]
+size = Vector3(0.09, 0.06, 0.2)
+
+[sub_resource type="BoxMesh" id="slide_mesh"]
+size = Vector3(0.07, 0.05, 0.24)
+
+[sub_resource type="BoxMesh" id="grip_mesh"]
+size = Vector3(0.08, 0.14, 0.07)
+
+[node name="PistolModel" type="Node3D"]
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, -0.01)
+mesh = SubResource("body_mesh")
+surface_material_override/0 = SubResource("frame")
+
+[node name="Slide" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.07)
+mesh = SubResource("slide_mesh")
+surface_material_override/0 = SubResource("barrel")
+
+[node name="Grip" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, -0.05)
+mesh = SubResource("grip_mesh")
+surface_material_override/0 = SubResource("grip")

@@ -5,6 +5,9 @@ const STAGE_PATH := "res://scenes/core/stage1.tscn"
 
 func _ready() -> void:
 	$StartButton.pressed.connect(_start_game)
+	var all := OS.get_cmdline_args() + OS.get_cmdline_user_args()
+	if "--skip-menu" in all:
+		call_deferred("_start_game")
 
 
 func _unhandled_input(event: InputEvent) -> void:

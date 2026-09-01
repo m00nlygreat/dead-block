@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/food-kit/Models/GLB format/cooking-knife.glb" id="1"]
+
+[node name="KnifeModel" type="Node3D"]
+
+[node name="Knife" parent="." instance=ExtResource("1")]
+transform = Transform3D(0, 0.55, 0, -0.55, 0, 0, 0, 0, 0.55, 0, 0.177, 0)

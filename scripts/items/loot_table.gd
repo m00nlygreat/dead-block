@@ -3,7 +3,7 @@ extends Resource
 
 @export var entries: Array[LootEntry] = []
 @export var roll_count_min := 1
-@export var roll_count_max := 2
+@export var roll_count_max := 1
 
 
 func roll() -> Array[Dictionary]:

@@ -13,6 +13,7 @@ var _slot_sb_normal: StyleBoxFlat
 var _slot_sb_selected: StyleBoxFlat
 var _coin_label: Label
 var _material_label: Label
+var _kill_label: Label
 
 @onready var _prompt: Label = $Root/Prompt
 @onready var _bar: ProgressBar = $Root/SearchBar
@@ -105,11 +106,36 @@ func _ready() -> void:
 	$Root.add_child(_material_label)
 	_add_bar_label(_hunger_bar, "허기")
 	_add_bar_label(_thirst_bar, "갈증")
+	_build_kill_display()
+	UpgradeManager.kills_changed.connect(_on_kills_changed)
+	GameState.coins_changed.connect(func(_c: int) -> void: _on_kills_changed(UpgradeManager.kills))
+	_on_kills_changed(UpgradeManager.kills)
 	_refresh_inventory()
 	_refresh_weapon()
 	_refresh_hotbar()
 	_on_coins_changed(GameState.coins)
 	_refresh_materials()
+
+
+func _build_kill_display() -> void:
+	_kill_label = Label.new()
+	_kill_label.anchor_left = 0.5
+	_kill_label.anchor_right = 0.5
+	_kill_label.offset_left = -320.0
+	_kill_label.offset_right = 320.0
+	_kill_label.offset_top = 12.0
+	_kill_label.offset_bottom = 44.0
+	_kill_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_kill_label.add_theme_font_size_override("font_size", 24)
+	$Root.add_child(_kill_label)
+
+
+func _on_kills_changed(kills: int) -> void:
+	if _kill_label == null:
+		return
+	var to_next: int = UpgradeManager.KILLS_PER_SPAWN \
+		- (kills % UpgradeManager.KILLS_PER_SPAWN)
+	_kill_label.text = "처치 %d · 다음 안전가옥 %d킬" % [kills, to_next]
 
 
 func _on_coins_changed(total: int) -> void:
@@ -268,6 +294,7 @@ func _restart() -> void:
 	_player = null
 	InventoryManager.reset_run()
 	GameState.reset_run_state()
+	UpgradeManager.reset_run()
 	get_tree().reload_current_scene()
 
 

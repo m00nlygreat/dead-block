@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="UpgradeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/upgrade_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "up_move_speed"
+display_name = "경량화 부츠"
+description = "이동 속도 +8%."
+max_level = 5
+cost = 10
+weight = 10.0
+effect_id = "move_speed"
+values = Array[float]([8.0, 8.0, 8.0, 8.0, 8.0])

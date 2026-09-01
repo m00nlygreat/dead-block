@@ -5,10 +5,10 @@
 [ext_resource type="PackedScene" path="res://scenes/player/camera_rig.tscn" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="4"]
 [ext_resource type="Script" path="res://scripts/world/zombie_spawner.gd" id="5"]
-[ext_resource type="Script" path="res://scripts/world/loot_container_spawner.gd" id="6"]
 [ext_resource type="PackedScene" path="res://scenes/world/car_trunk.tscn" id="7"]
 [ext_resource type="Resource" path="res://resources/loot_tables/trash_common.tres" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/items/item_pickup.tscn" id="9"]
+[ext_resource type="PackedScene" path="res://scenes/ui/upgrade_ui.tscn" id="10"]
 
 [sub_resource type="Environment" id="env"]
 ambient_light_source = 2
@@ -39,15 +39,13 @@ position = Vector3(-1.5, 0, 1.2)
 item_id = "weapon_bat"
 qty = 1
 
+[node name="StartPistol" parent="." instance=ExtResource("9")]
+position = Vector3(1.5, 0, 1.2)
+item_id = "weapon_9mm"
+qty = 1
+
 [node name="ZombieSpawner" type="Node" parent="."]
 script = ExtResource("5")
-
-[node name="ContainerSpawner" type="Node" parent="."]
-script = ExtResource("6")
-container_scene = ExtResource("7")
-tables = Array[Resource]([ExtResource("8")])
-interval = 7.0
-max_containers = 18
 
 [node name="Player" parent="." instance=ExtResource("2")]
 
@@ -55,3 +53,5 @@ max_containers = 18
 target_path = NodePath("../Player")
 
 [node name="Hud" parent="." instance=ExtResource("4")]
+
+[node name="UpgradeUI" parent="." instance=ExtResource("10")]

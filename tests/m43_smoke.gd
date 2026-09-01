@@ -30,7 +30,7 @@ func _run() -> void:
 
 	InventoryManager.cycle_selected(-1)
 	await _ticks(2)
-	print("T5_BACK_TO_WEAPON_REEQUIPS: ", InventoryManager.equipped_weapon_id == "weapon_bat" and InventoryManager.equipped_durability == 25 and player._weapon_visual != null)
+	print("T5_BACK_TO_WEAPON_REEQUIPS: ", InventoryManager.equipped_weapon_id == "weapon_bat" and InventoryManager.equipped_durability == 40 and player._weapon_visual != null)
 
 	InventoryManager.add_item("food_canned", 2)
 	var canned_slot := -1

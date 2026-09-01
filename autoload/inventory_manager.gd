@@ -38,6 +38,10 @@ func add_item(id: String, qty: int = 1, initial_durability := -1) -> int:
 	var item = ItemDB.get_item(id)
 	if item == null or qty <= 0:
 		return 0
+	## 원거리 무기: 이미 보유 중이면 새 슬롯 대신 장탄수를 최대치로 보충.
+	if item.is_ranged and count_of(id) > 0:
+		_refill_magazine(id)
+		return qty
 	var added := 0
 	while added < qty:
 		if total_weight() + item.weight > MAX_WEIGHT:
@@ -133,9 +137,28 @@ func weapon_used() -> void:
 	equipped_durability -= 1
 	durabilities[equipped_weapon_id] = equipped_durability
 	if equipped_durability <= 0:
-		remove_one_of(equipped_weapon_id)
+		if item.is_ranged:
+			## 원거리 무기는 0발이 돼도 파손되지 않고 유지(장전 대기).
+			equipped_durability = 0
+			durabilities[equipped_weapon_id] = 0
+			weapon_changed.emit()
+		else:
+			remove_one_of(equipped_weapon_id)
 	else:
 		weapon_changed.emit()
+
+
+## 원거리 무기의 장탄수(내구도)를 최대치로 보충. 이미 보유 시 새 슬롯 없음.
+func _refill_magazine(id: String) -> void:
+	var item = ItemDB.get_item(id)
+	if item == null:
+		return
+	durabilities[id] = item.durability
+	if equipped_weapon_id == id:
+		equipped_durability = item.durability
+	_register_hotbar(id)
+	inventory_changed.emit()
+	weapon_changed.emit()
 
 
 func use_durability(id: String) -> void:

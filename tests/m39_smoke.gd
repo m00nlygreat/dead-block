@@ -1,7 +1,7 @@
 extends Node
 
 const PLAYER_SCENE := preload("res://scenes/player/player.tscn")
-const CONTAINER_SCENE := preload("res://scenes/world/loot_container.tscn")
+const CONTAINER_SCENE := preload("res://scenes/world/car_trunk.tscn")
 const CAR_SCENE := preload("res://scenes/world/car_trunk.tscn")
 
 

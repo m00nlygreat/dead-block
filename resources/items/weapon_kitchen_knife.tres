@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "weapon_kitchen_knife"
+display_name = "부억칼"
+item_type = 0
+rarity = 2
+weight = 0.4
+max_stack = 1
+description = "잘 닳은 부엌칼. 한 번 찌르면 끝난다."
+damage = 60.0
+reach = 1.8
+arc_deg = 90.0
+max_targets = 1
+durability = 12
+attack_cooldown = 0.6
+knockback = 0.0
+stagger_time = 0.25

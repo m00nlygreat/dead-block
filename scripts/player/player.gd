@@ -5,7 +5,24 @@ signal hunger_changed(hunger: float, max_hunger: float)
 signal thirst_changed(thirst: float, max_thirst: float)
 signal died
 
-const BAT_MODEL := preload("res://scenes/items/bat_model.tscn")
+const WEAPON_VISUALS := {
+	"weapon_bat": preload("res://scenes/items/bat_model.tscn"),
+	"weapon_kitchen_knife": preload("res://scenes/items/knife_model.tscn"),
+	"weapon_blade": preload("res://scenes/items/knife_model.tscn"),
+	"weapon_9mm": preload("res://scenes/items/pistol_model.tscn"),
+}
+## 손에 든 무기 모델 표시 배율 (미등록 시 1.0)
+const WEAPON_VISUAL_SCALES := {
+	"weapon_bat": 1.5,
+	"weapon_kitchen_knife": 3.0,
+	"weapon_blade": 3.0,
+	"weapon_9mm": 1.6,
+}
+## 칼 계열 무기(부엌칼·날붙이) — 찌르기 애님·히트 딜레이·잔상 공유
+const KNIFE_LIKE_IDS := ["weapon_kitchen_knife", "weapon_blade"]
+## 원거리 무기 — 사격 투사체 발사
+const RANGED_LIKE_IDS := ["weapon_9mm"]
+const BULLET_SCENE := preload("res://scenes/items/bullet.tscn")
 const PICKUP_SCENE := preload("res://scenes/items/item_pickup.tscn")
 const WALK_SPEED := 4.0
 const SPRINT_SPEED := 7.5
@@ -31,9 +48,19 @@ const MELEE_REACH := 1.8
 const MELEE_ARC_DEG := 90.0
 const MELEE_HIT_DELAY := 0.15
 const BAT_HIT_DELAY := 0.3
+const KNIFE_HIT_DELAY := 0.14
+
+## 나무 수관 통과 시 이동 감속 배율
+const TREE_SLOW_MULT := 0.45
+
+## 코인 자석 반경(m) — 기존 코인 접촉 획득 반경(0.4)과 동일한 시작값
+const BASE_PICKUP_RADIUS := 0.4
 
 const FIST_TRAIL_COLOR := Color(0.85, 0.85, 0.9)
 const BAT_TRAIL_COLOR := Color(1.0, 0.55, 0.1)
+const KNIFE_TRAIL_COLOR := Color(0.75, 0.85, 1.0)
+## 권총 사격 시 손 끝 위치에서 전방 오프셋(m)
+const PISTOL_MUZZLE_OFFSET := 0.5
 
 @export var model_yaw_offset := PI
 @export var max_hp := 100.0
@@ -52,20 +79,33 @@ var _current_anim := ""
 var _search_target: Node = null
 var _search_progress := 0.0
 var _melee_cd := 0.0
+var _ranged_cd := 0.0
 var _invuln := 0.0
 var _lock_anim_t := 0.0
 var _regen_wait := 0.0
 var _hand: Node3D = null
 var _weapon_visual: Node3D = null
+var _visual_id := ""
 var _dead := false
 var _starve_t := 0.0
 var _consume_item: ItemData = null
 var _consume_id := ""
 var _consume_progress := 0.0
 
+## 런 한정 성장 배율(XpManager 레벨업 업그레이드로 증가)
+var move_speed_mult := 1.0
+var damage_mult := 1.0
+var cooldown_mult := 1.0
+var stamina_regen_mult := 1.0
+var pickup_radius_mult := 1.0
+var bat_reach_bonus := 0.0
+var bat_targets_bonus := 0
+var bat_knockback_mult := 1.0
+
 @onready var _model: Node3D = $Model
 @onready var _interact_area: Area3D = $InteractArea
 @onready var _swing_trail: SwingTrail = $SwingTrail
+@onready var _pickup_attractor: Area3D = $PickupAttractor
 
 
 func _ready() -> void:
@@ -85,9 +125,47 @@ func _ready() -> void:
 			_anim.get_animation(anim_name).loop_mode = Animation.LOOP_LINEAR
 	_play("idle")
 	BatSwing.register(_anim)
+	KnifeStab.register(_anim)
 	_hand = _model.find_child("arm-right", true, false)
+	_pickup_attractor.area_entered.connect(_on_pickup_area_entered)
 	InventoryManager.weapon_changed.connect(_refresh_weapon_visual)
 	_refresh_weapon_visual()
+
+
+func _on_pickup_area_entered(area: Area3D) -> void:
+	if area.has_method("magnetize"):
+		area.magnetize(self)
+
+
+## UpgradeManager가 업그레이드 카드 선택 시 호출
+func apply_upgrade(effect_id: String, value: float) -> void:
+	match effect_id:
+		"max_hp":
+			max_hp += value
+			heal(value)
+		"move_speed":
+			move_speed_mult += value / 100.0
+		"damage":
+			damage_mult += value / 100.0
+		"cooldown":
+			cooldown_mult = maxf(cooldown_mult - value / 100.0, 0.5)
+		"pickup_radius":
+			pickup_radius_mult += value / 100.0
+			_update_pickup_radius()
+		"stamina_regen":
+			stamina_regen_mult += value / 100.0
+		"bat_reach":
+			bat_reach_bonus += value
+		"bat_targets":
+			bat_targets_bonus += int(round(value))
+		"bat_knockback":
+			bat_knockback_mult += value / 100.0
+
+
+func _update_pickup_radius() -> void:
+	var cs: CollisionShape3D = _pickup_attractor.get_node("PickupShape")
+	if cs.shape is SphereShape3D:
+		cs.shape.radius = BASE_PICKUP_RADIUS * pickup_radius_mult
 
 
 const ACTIONS_TO_RELEASE := [
@@ -110,15 +188,22 @@ func _release_all_actions() -> void:
 
 func _refresh_weapon_visual() -> void:
 	var item = InventoryManager.get_equipped_item()
-	var want_bat: bool = item != null and item.is_weapon()
-	if want_bat and _weapon_visual == null and _hand != null:
-		_weapon_visual = BAT_MODEL.instantiate()
+	var want_weapon: bool = item != null and item.is_weapon()
+	var vis_id := InventoryManager.equipped_weapon_id if want_weapon else ""
+	if want_weapon and _hand != null and (_weapon_visual == null or _visual_id != vis_id):
+		if _weapon_visual != null:
+			_weapon_visual.queue_free()
+		var scene: PackedScene = WEAPON_VISUALS.get(vis_id, WEAPON_VISUALS["weapon_bat"])
+		_weapon_visual = scene.instantiate()
 		_hand.add_child(_weapon_visual)
 		_weapon_visual.position = Vector3(0.0, -0.8, -0.02)
 		_weapon_visual.rotation_degrees = Vector3(80.0, 0.0, 0.0)
-	elif not want_bat and _weapon_visual != null:
+		_weapon_visual.scale = Vector3.ONE * float(WEAPON_VISUAL_SCALES.get(vis_id, 1.0))
+		_visual_id = vis_id
+	elif not want_weapon and _weapon_visual != null:
 		_weapon_visual.queue_free()
 		_weapon_visual = null
+		_visual_id = ""
 
 
 func _ground_model() -> void:
@@ -152,7 +237,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		_regen_wait -= delta
 		if _regen_wait <= 0.0:
-			var regen := STAMINA_REGEN * (STARVED_STAMINA_REGEN_MULT if hunger <= 0.0 else 1.0)
+			var regen := STAMINA_REGEN * stamina_regen_mult * (STARVED_STAMINA_REGEN_MULT if hunger <= 0.0 else 1.0)
 			stamina = minf(stamina + regen * delta, max_stamina)
 	var sprinting := want_sprint
 	var aiming := Input.is_action_pressed("aim")
@@ -160,6 +245,8 @@ func _physics_process(delta: float) -> void:
 	var target_vel := dir * _move_speed(sprinting, dir)
 	if eating:
 		target_vel *= CONSUME_SPEED_MULT
+	if TreeZone.slows(self):
+		target_vel *= TREE_SLOW_MULT
 	var rate := ACCELERATION if moving else DECELERATION
 	velocity.x = move_toward(velocity.x, target_vel.x, rate * delta * WALK_SPEED * 2.0)
 	velocity.z = move_toward(velocity.z, target_vel.z, rate * delta * WALK_SPEED * 2.0)
@@ -182,7 +269,7 @@ func _move_speed(sprinting: bool, dir: Vector3) -> float:
 	fwd = fwd.normalized()
 	if fwd.dot(dir.normalized()) < -0.35:
 		speed *= BACKPEDAL_MULT
-	return speed
+	return speed * move_speed_mult
 
 
 func take_damage(amount: float) -> void:
@@ -394,32 +481,77 @@ func _drop_selected() -> void:
 
 func _update_combat(delta: float) -> void:
 	_melee_cd -= delta
+	_ranged_cd -= delta
 	_invuln -= delta
 	if _dead:
 		return
-	if Input.is_action_just_pressed("attack") and not is_searching() and not is_consuming() and _melee_cd <= 0.0:
+	var item = InventoryManager.get_equipped_item()
+	var is_ranged_weapon: bool = item != null and item.is_weapon() and item.is_ranged
+	if is_ranged_weapon:
+		if Input.is_action_pressed("attack") and Input.is_action_pressed("aim") \
+				and not is_searching() and not is_consuming() and _ranged_cd <= 0.0 \
+				and InventoryManager.equipped_durability > 0:
+			_ranged_attack(item)
+	elif Input.is_action_just_pressed("attack") and not is_searching() and not is_consuming() and _melee_cd <= 0.0:
 		_melee_attack()
 
 
 func _get_weapon_stats() -> Dictionary:
 	var item = InventoryManager.get_equipped_item()
 	if item != null and item.is_weapon():
+		## 배트 강화 업그레이드는 배트 장착 중에만 적용(REQUIREMENT.md)
+		var is_bat: bool = item.id == "weapon_bat"
 		return {
-			"damage": item.damage,
-			"reach": item.reach,
+			"damage": item.damage * damage_mult,
+			"reach": item.reach + (bat_reach_bonus if is_bat else 0.0),
 			"arc": item.arc_deg,
-			"targets": item.max_targets,
-			"cooldown": item.attack_cooldown,
-			"hit_delay": BAT_HIT_DELAY,
+			"targets": item.max_targets + (bat_targets_bonus if is_bat else 0),
+			"cooldown": item.attack_cooldown * cooldown_mult,
+			"hit_delay": KNIFE_HIT_DELAY if KNIFE_LIKE_IDS.has(item.id) else BAT_HIT_DELAY,
+			"knockback": item.knockback * (bat_knockback_mult if is_bat else 1.0),
+			"stagger": item.stagger_time,
 		}
 	return {
-		"damage": MELEE_DAMAGE,
+		"damage": MELEE_DAMAGE * damage_mult,
 		"reach": MELEE_REACH,
 		"arc": MELEE_ARC_DEG,
 		"targets": 1,
-		"cooldown": MELEE_COOLDOWN,
+		"cooldown": MELEE_COOLDOWN * cooldown_mult,
 		"hit_delay": MELEE_HIT_DELAY,
+		"knockback": 0.0,
+		"stagger": 0.0,
 	}
+
+
+func _ranged_attack(item) -> void:
+	var cooldown := maxf(item.attack_cooldown * cooldown_mult, 0.05)
+	_ranged_cd = cooldown
+	var aim_point: Variant = _get_aim_point()
+	if aim_point == null:
+		aim_point = global_position + (-global_transform.basis.z) * 10.0
+	var fwd: Vector3 = aim_point - global_position
+	fwd.y = 0.0
+	fwd = fwd.normalized()
+	if fwd.length() < 0.01:
+		fwd = -global_transform.basis.z
+		fwd.y = 0.0
+		fwd = fwd.normalized()
+
+	var muzzle := global_position + Vector3.UP * 1.0 + fwd * PISTOL_MUZZLE_OFFSET
+	var bullet := BULLET_SCENE.instantiate()
+	bullet.setup(
+		muzzle,
+		fwd,
+		item.projectile_speed,
+		item.damage * damage_mult,
+		item.headshot_chance,
+		item.knockback * (bat_knockback_mult if item.id == "weapon_bat" else 1.0),
+		item.stagger_time,
+		item.reach
+	)
+	get_tree().current_scene.add_child(bullet)
+	NoiseSystem.emit_noise(global_position, 5.0, 0)
+	InventoryManager.weapon_used()
 
 
 func _melee_attack() -> void:
@@ -427,12 +559,15 @@ func _melee_attack() -> void:
 	_melee_cd = float(ws["cooldown"])
 	var clip := "attack-melee-right"
 	var item = InventoryManager.get_equipped_item()
-	if item != null and item.is_weapon() and _anim.has_animation(BatSwing.CLIP_NAME):
-		clip = BatSwing.CLIP_NAME
+	if item != null and item.is_weapon():
+		if KNIFE_LIKE_IDS.has(item.id) and _anim.has_animation(KnifeStab.CLIP_NAME):
+			clip = KnifeStab.CLIP_NAME
+		elif _anim.has_animation(BatSwing.CLIP_NAME):
+			clip = BatSwing.CLIP_NAME
 	_play_oneshot(clip)
 	var trail_color := FIST_TRAIL_COLOR
 	if item != null and item.is_weapon():
-		trail_color = BAT_TRAIL_COLOR
+		trail_color = KNIFE_TRAIL_COLOR if KNIFE_LIKE_IDS.has(item.id) else BAT_TRAIL_COLOR
 	_swing_trail.play(float(ws["reach"]), float(ws["arc"]), trail_color)
 	NoiseSystem.emit_noise(global_position, 5.0, 0)
 	get_tree().create_timer(float(ws["hit_delay"])).timeout.connect(_melee_hit.bind(ws))
@@ -456,7 +591,10 @@ func _melee_hit(ws: Dictionary) -> void:
 	hits.sort_custom(func(a, b): return a[0] < b[0])
 	var n: int = mini(int(ws["targets"]), hits.size())
 	for i in n:
-		hits[i][1].take_damage(float(ws["damage"]), global_position)
+		hits[i][1].take_damage(
+			float(ws["damage"]), global_position,
+			float(ws["knockback"]), float(ws["stagger"])
+		)
 	if n > 0 and InventoryManager.get_equipped_item() != null:
 		InventoryManager.weapon_used()
 

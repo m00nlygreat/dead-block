@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1"]
 [ext_resource type="PackedScene" path="res://assets/blocky-characters/Models/GLB format/character-a.glb" id="2"]
@@ -10,6 +10,9 @@ height = 1.3
 
 [sub_resource type="SphereShape3D" id="interact_shape"]
 radius = 2.0
+
+[sub_resource type="SphereShape3D" id="pickup_shape"]
+radius = 0.4
 
 [sub_resource type="CylinderMesh" id="blob_mesh"]
 top_radius = 0.55
@@ -39,6 +42,15 @@ collision_mask = 8
 [node name="InteractShape" type="CollisionShape3D" parent="InteractArea"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("interact_shape")
+
+[node name="PickupAttractor" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 4
+monitorable = false
+
+[node name="PickupShape" type="CollisionShape3D" parent="PickupAttractor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("pickup_shape")
 
 [node name="SwingTrail" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)

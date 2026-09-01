@@ -4,6 +4,17 @@ extends CharacterBody3D
 signal died(zombie: Zombie)
 
 const COIN_SCENE := preload("res://scenes/items/coin_pickup.tscn")
+## 재활용 업그레이드 습득 시 스크랩 드롭 확률
+const SALVAGE_CHANCE := 0.1
+## 외형 변형 후보(플레이어 character-a, 기본값 character-c 제외)
+const VARIANT_SCENES := [
+	preload("res://assets/blocky-characters/Models/GLB format/character-d.glb"),
+	preload("res://assets/blocky-characters/Models/GLB format/character-e.glb"),
+	preload("res://assets/blocky-characters/Models/GLB format/character-f.glb"),
+	preload("res://assets/blocky-characters/Models/GLB format/character-g.glb"),
+	preload("res://assets/blocky-characters/Models/GLB format/character-i.glb"),
+	preload("res://assets/blocky-characters/Models/GLB format/character-k.glb"),
+]
 
 enum State { IDLE, WANDER, CHASE, ATTACK, DEAD }
 
@@ -18,6 +29,11 @@ const PERCEPTION_INTERVAL := 0.2
 @export var vision_radius := 10.0
 @export var fov_deg := 100.0
 @export var model_yaw_offset := PI
+## -1이면 기본 외형(character-c), 0 이상이면 VARIANT_SCENES 인덱스
+@export var variant_index := -1
+
+## 나무 수관 통과 시 이동 감속 배율
+const TREE_SLOW_MULT := 0.45
 
 var hp := 60.0
 var state: int = State.IDLE
@@ -31,6 +47,7 @@ var _attack_cd := 0.0
 var _attack_windup := 0.0
 var _perception_t := 0.0
 var _knockback := Vector3.ZERO
+var _stagger_t := 0.0
 var _lock_anim_t := 0.0
 var _dead := false
 
@@ -39,8 +56,19 @@ var _anim: AnimationPlayer
 @onready var _model: Node3D = $Model
 
 
+func _apply_variant() -> void:
+	if variant_index < 0 or variant_index >= VARIANT_SCENES.size():
+		return
+	for ch in _model.get_children():
+		_model.remove_child(ch)
+		ch.free()
+	var inst: Node3D = VARIANT_SCENES[variant_index].instantiate()
+	_model.add_child(inst)
+
+
 func _ready() -> void:
 	add_to_group("zombies")
+	_apply_variant()
 	hp = max_hp
 	_model.rotation.y = model_yaw_offset
 	_anim = find_child("AnimationPlayer", true, false)
@@ -60,11 +88,17 @@ func _physics_process(delta: float) -> void:
 	if _dead:
 		return
 	_attack_cd -= delta
+	_lock_anim_t -= delta
+	if _stagger_t > 0.0:
+		_stagger_t -= delta
+		_knockback = _knockback.move_toward(Vector3.ZERO, 14.0 * delta)
+		velocity = _knockback
+		move_and_slide()
+		return
 	if _attack_windup > 0.0:
 		_attack_windup -= delta
 		if _attack_windup <= 0.0:
 			_do_attack_hit()
-	_lock_anim_t -= delta
 	_perception_t -= delta
 	if _perception_t <= 0.0:
 		_perception_t = PERCEPTION_INTERVAL
@@ -119,15 +153,29 @@ func on_noise(pos: Vector3, _priority: int) -> void:
 	state = State.WANDER
 
 
-func take_damage(amount: float, from_pos: Vector3) -> void:
+## 안전가옥 파동: 플레이어 중심에서 바깥으로 원형 넉백. 살아있는 좀비만.
+func apply_wave_knockback(dir: Vector3, speed: float) -> void:
+	if _dead:
+		return
+	dir.y = 0.0
+	if dir.length() <= 0.01:
+		return
+	_knockback = dir.normalized() * speed
+
+
+func take_damage(amount: float, from_pos: Vector3,
+		knockback_speed := 0.0, stagger_time := 0.0) -> void:
 	if _dead:
 		return
 	hp -= amount
 	HitFlash.flash(self)
 	var kb := global_position - from_pos
 	kb.y = 0.0
-	if kb.length() > 0.01:
-		_knockback = kb.normalized() * 5.0
+	if knockback_speed > 0.0 and kb.length() > 0.01:
+		_knockback = kb.normalized() * knockback_speed
+	if stagger_time > _stagger_t:
+		_stagger_t = stagger_time
+		_attack_windup = 0.0
 	var p: Node3D = _get_player()
 	if p != null:
 		_player = p
@@ -144,6 +192,9 @@ func _die() -> void:
 	velocity = Vector3.ZERO
 	died.emit(self)
 	_drop_coin()
+	UpgradeManager.add_kill()
+	if UpgradeManager.upgrade_level("up_salvage") > 0 and randf() < SALVAGE_CHANCE:
+		GameState.add_scrap(1)
 	if _anim != null and _anim.has_animation("die"):
 		_current_anim = ""
 		_play("die")
@@ -201,7 +252,8 @@ func _steer(target: Vector3, speed: float, delta: float) -> void:
 	dir.y = 0.0
 	dir = dir.normalized()
 	_face_towards(target, delta)
-	velocity = dir * speed + _knockback
+	var mult := TREE_SLOW_MULT if TreeZone.slows(self) else 1.0
+	velocity = dir * speed * mult + _knockback
 
 
 func _face_towards(point: Vector3, delta: float) -> void:

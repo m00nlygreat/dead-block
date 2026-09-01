@@ -18,6 +18,16 @@ enum Type { WEAPON, FOOD, MEDICAL, MATERIAL, KEY, VALUABLE }
 @export var max_targets := 1
 @export var durability := 0
 @export var attack_cooldown := 0.6
+## 피격자를 밀어내는 속도(m/s), 0이면 밀려남 없음
+@export var knockback := 0.0
+## 피격자 행동 경직 시간(초), 0이면 경직 없음
+@export var stagger_time := 0.0
+## 원거리 무기 여부
+@export var is_ranged := false
+## 헤드샷 확률(0.0~1.0), 헤드샷 시 즉사
+@export var headshot_chance := 0.0
+## 투사체 초속(m/s)
+@export var projectile_speed := 0.0
 
 @export_group("Consumable")
 @export var hunger_restore := 0.0
