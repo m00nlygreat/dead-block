@@ -7,11 +7,6 @@ const SPRINT_NOISE_RADIUS := 10.0
 const MELEE_NOISE_RADIUS := 5.0
 const GUN_NOISE_RADIUS := 15.0
 
-const RIPPLE_COLOR_WALK := Color(0.6, 0.75, 1.0)
-const RIPPLE_COLOR_SPRINT := Color(0.5, 0.65, 1.0)
-const RIPPLE_COLOR_MELEE := Color(1.0, 0.85, 0.5)
-const RIPPLE_COLOR_GUN := Color(1.0, 0.4, 0.3)
-
 var listeners: Array = []
 
 
@@ -35,26 +30,22 @@ func emit_noise(pos: Vector3, radius: float, priority: int = 0) -> void:
 
 func emit_walk_noise(pos: Vector3, sprinting: bool) -> void:
 	var radius := SPRINT_NOISE_RADIUS if sprinting else WALK_NOISE_RADIUS
-	var color := RIPPLE_COLOR_SPRINT if sprinting else RIPPLE_COLOR_WALK
 	emit_noise(pos, radius, 0)
-	_spawn_ripple(pos, radius, color)
 
 
 func emit_melee_noise(pos: Vector3) -> void:
 	emit_noise(pos, MELEE_NOISE_RADIUS, 0)
-	_spawn_ripple(pos, MELEE_NOISE_RADIUS, RIPPLE_COLOR_MELEE)
 
 
 func emit_gun_noise(pos: Vector3) -> void:
 	emit_noise(pos, GUN_NOISE_RADIUS, 1)
-	_spawn_ripple(pos, GUN_NOISE_RADIUS, RIPPLE_COLOR_GUN)
 
 
-func _spawn_ripple(pos: Vector3, radius: float, color: Color = Color.WHITE) -> void:
+func _spawn_ripple(pos: Vector3, radius: float) -> void:
 	var scene := get_tree().current_scene
 	if scene == null:
 		return
 	var ripple := NoiseRipple.new()
 	ripple.position = Vector3(pos.x, 0.0, pos.z)
-	ripple.start(radius, color)
+	ripple.start(radius)
 	scene.add_child(ripple)
