@@ -21,6 +21,16 @@
 - Kenney 에셋(CC0)은 `assets/` 하위에 팩명 폴더로 유지.
 - 물리 레이어: 1 world / 2 player / 3 zombie / 4 interactable / 5 projectile.
 
+## 웹 빌드 호환성 (필수 준수)
+
+- 배포 대상이 **웹(GitHub Pages)**이므로, 모든 변경은 웹 빌드에서도 동작함을 전제로 한다. 에디터(F5)에서만 확인하고 넘어가지 않는다.
+- **폰트**: `SystemFont`는 웹에서 미동작(기본 폰트 폴백은 Latin/Greek/Cyrillic 전용 → 한글 미표시). 한글/다국어 표시는 번들 FontFile(`assets/fonts/NotoSansKR-Regular.otf`)을 쓴다. 새 UI·Label3D 씬에 SystemFont 사용 금지.
+- **파일 시스템**: 익스포트하면 `*.tres`는 `*.tres.remap` 파일명으로 저장된다. `DirAccess` 목록에서 확장자(`.tres` 등)를 그대로 검사하면 전부 누락된다. `.remap`을 벗긴 뒤 **원래 경로로 `load()`** 한다(`autoload/item_db.gd`, `autoload/upgrade_manager.gd` 패턴). 스모크 테스트는 소스 기준이라 이 버그를 못 잡으므로, 리소스 디렉터리 스캔을 도입·수정하면 **PCK 프로브**(`--headless --main-pack`으로 익스포트 산출물 로드)로 재확인할 것.
+- **렌더러**: 웹은 Compatibility(WebGL 2.0)로 동작한다. Forward+ 전용 렌더링 기능/셰이더는 웹에서 지원되지 않으므로 호환성을 확인한다.
+- **스레드**: 웹 익스포트는 single-thread(`variant/thread_support=false`)다. `Thread`·`WorkerThreadPool` 사용을 피하고, 써야 하면 웹 폴백이 필수다.
+- 새 기능/수정은 커밋·푸시 → GitHub Actions 재배포 → `https://m00nlygreat.github.io/dead-block/`에서 동작 확인까지 마쳐야 완료로 본다.
+- 커밋·푸시 요청 시 **오프라인 빌드(Windows 데스크톱 익스포트)도 `builds/win64`에 함께 생성**한다.
+
 ## 위키 관리
 
 - 이 저장소의 간단한 위키는 `wiki/`에 둔다.

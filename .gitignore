@@ -4,6 +4,7 @@
 
 # Build artifacts (rebuilt by CI on GitHub Actions)
 build/
+builds/
 
 # System
 *.tmp

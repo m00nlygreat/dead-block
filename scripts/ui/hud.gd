@@ -29,6 +29,7 @@ var _kill_label: Label
 @onready var _grid: GridContainer = $Root/InvPanel/Grid
 @onready var _hotbar: HBoxContainer = $Root/Hotbar
 @onready var _go_root: ColorRect = $Root/GameOverRoot
+@onready var _item_info_panel: Panel = $Root/ItemInfoPanel
 
 
 func _ready() -> void:
@@ -115,6 +116,7 @@ func _ready() -> void:
 	_refresh_hotbar()
 	_on_coins_changed(GameState.coins)
 	_refresh_materials()
+	_init_item_info_panel()
 
 
 func _build_kill_display() -> void:
@@ -128,6 +130,56 @@ func _build_kill_display() -> void:
 	_kill_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_kill_label.add_theme_font_size_override("font_size", 24)
 	$Root.add_child(_kill_label)
+
+
+func _init_item_info_panel() -> void:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.08, 0.08, 0.1, 0.9)
+	sb.set_corner_radius_all(8)
+	sb.set_border_width_all(2)
+	sb.border_color = Color(0.3, 0.3, 0.35)
+	_item_info_panel.add_theme_stylebox_override("panel", sb)
+	_item_info_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var name_label := Label.new()
+	name_label.name = "NameLabel"
+	name_label.position = Vector2(10, 8)
+	name_label.custom_minimum_size = Vector2(260, 24)
+	name_label.add_theme_font_size_override("font_size", 18)
+	_item_info_panel.add_child(name_label)
+
+	var type_label := Label.new()
+	type_label.name = "TypeLabel"
+	type_label.position = Vector2(10, 34)
+	type_label.custom_minimum_size = Vector2(260, 18)
+	type_label.add_theme_font_size_override("font_size", 13)
+	type_label.self_modulate = Color(0.7, 0.75, 0.85)
+	_item_info_panel.add_child(type_label)
+
+	var desc_label := Label.new()
+	desc_label.name = "DescLabel"
+	desc_label.position = Vector2(10, 56)
+	desc_label.custom_minimum_size = Vector2(260, 60)
+	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_label.add_theme_font_size_override("font_size", 13)
+	desc_label.self_modulate = Color(0.8, 0.8, 0.85)
+	_item_info_panel.add_child(desc_label)
+
+	var qty_label := Label.new()
+	qty_label.name = "QtyLabel"
+	qty_label.position = Vector2(10, 120)
+	qty_label.custom_minimum_size = Vector2(260, 18)
+	qty_label.add_theme_font_size_override("font_size", 14)
+	_item_info_panel.add_child(qty_label)
+
+	var dur_label := Label.new()
+	dur_label.name = "DurLabel"
+	dur_label.position = Vector2(10, 140)
+	dur_label.custom_minimum_size = Vector2(260, 18)
+	dur_label.add_theme_font_size_override("font_size", 14)
+	_item_info_panel.add_child(dur_label)
+
+	InventoryManager.selected_changed.connect(func(_i: int) -> void: _refresh_item_info())
 
 
 func _on_kills_changed(kills: int) -> void:
@@ -215,6 +267,7 @@ func _refresh_hotbar() -> void:
 			dur_bar.add_theme_stylebox_override("fill", fill)
 		else:
 			dur_bar.visible = false
+	_refresh_item_info()
 
 
 func _set_slot_empty(name_label: Label, count_label: Label, dur_bar: ProgressBar) -> void:
@@ -222,6 +275,51 @@ func _set_slot_empty(name_label: Label, count_label: Label, dur_bar: ProgressBar
 	name_label.self_modulate = Color.WHITE
 	count_label.visible = false
 	dur_bar.visible = false
+
+
+func _refresh_item_info() -> void:
+	var id = InventoryManager.get_selected_id()
+	if id == null:
+		_item_info_panel.visible = false
+		return
+	var item = ItemDB.get_item(id)
+	if item == null:
+		_item_info_panel.visible = false
+		return
+	_item_info_panel.visible = true
+	var name_label: Label = _item_info_panel.get_node("NameLabel")
+	var type_label: Label = _item_info_panel.get_node("TypeLabel")
+	var desc_label: Label = _item_info_panel.get_node("DescLabel")
+	var qty_label: Label = _item_info_panel.get_node("QtyLabel")
+	var dur_label: Label = _item_info_panel.get_node("DurLabel")
+	name_label.text = item.display_name
+	name_label.self_modulate = ItemData.rarity_color(item.rarity)
+	var type_text := ""
+	if item.is_weapon():
+		type_text = "무기"
+	elif item.is_consumable():
+		type_text = "소비품"
+	else:
+		match item.item_type:
+			ItemData.Type.MATERIAL:
+				type_text = "재료"
+			ItemData.Type.KEY:
+				type_text = "키 아이템"
+			ItemData.Type.VALUABLE:
+				type_text = "가치품"
+			_:
+				type_text = ""
+	type_label.text = type_text
+	desc_label.text = item.description
+	var cnt: int = InventoryManager.count_of(id)
+	qty_label.text = "수량: %d" % cnt
+	var max_dur: int = item.durability
+	if max_dur > 0:
+		var cur := InventoryManager.get_current_durability(id)
+		dur_label.text = "내구도: %d / %d" % [cur, max_dur]
+		dur_label.visible = true
+	else:
+		dur_label.visible = false
 
 
 func _process(_delta: float) -> void:

@@ -15,6 +15,8 @@ const WAVE_RADIUS := 8.0
 const WAVE_KNOCKBACK := 12.0
 
 const SHOP_PRICES := {"bandage": 5, "water": 5}
+const AMMO_ID := "weapon_9mm"
+const AMMO_PRICE := 7
 const CRAFT_RECIPES := {
 	"weapon_blade": {"scrap_metal": 2, "cloth": 1},
 	"bandage": {"cloth": 2},
@@ -30,6 +32,7 @@ var _open_timer: Timer
 	"bandage": $Root/Columns/CenterCol/BuyBandage as Button,
 	"water": $Root/Columns/CenterCol/BuyWater as Button,
 }
+@onready var _buy_ammo_button: Button = $Root/Columns/CenterCol/BuyAmmo
 @onready var _craft_buttons: Dictionary = {
 	"weapon_blade": $Root/Columns/RightCol/CraftBlade as Button,
 	"bandage": $Root/Columns/RightCol/CraftBandage as Button,
@@ -51,6 +54,7 @@ func _ready() -> void:
 	for id in _buy_buttons:
 		var bb: Button = _buy_buttons[id]
 		bb.pressed.connect(_on_buy_pressed.bind(id))
+	_buy_ammo_button.pressed.connect(_on_buy_ammo_pressed)
 	for id in _craft_buttons:
 		var cb: Button = _craft_buttons[id]
 		cb.pressed.connect(_on_craft_pressed.bind(id))
@@ -182,6 +186,15 @@ func _refresh_shop() -> void:
 			item.display_name, price, InventoryManager.count_of(id),
 		]
 		b.disabled = GameState.coins < price
+	var has_gun: bool = InventoryManager.count_of(AMMO_ID) > 0
+	var ammo_item = ItemDB.get_item(AMMO_ID)
+	var mag_size: int = ammo_item.durability if ammo_item != null else 0
+	_buy_ammo_button.text = "권총 탄창 가득 · %d 코인\n%s" % [
+		AMMO_PRICE,
+		"" if has_gun else "권총 보유 필요",
+	]
+	_buy_ammo_button.disabled = not has_gun or GameState.coins < AMMO_PRICE
+	_buy_ammo_button.tooltip_text = "%d발로 보충" % mag_size if has_gun else "권총을 보유해야 구매할 수 있습니다"
 	for id in _craft_buttons:
 		var b: Button = _craft_buttons[id]
 		var recipe: Dictionary = CRAFT_RECIPES[id]
@@ -215,6 +228,16 @@ func _on_buy_pressed(id: String) -> void:
 	## 인벤 슬롯·무게 초과로 못 넣으면 코인 환불
 	if InventoryManager.add_item(id) == 0:
 		GameState.add_coins(price)
+	_refresh()
+
+
+## 권총 탄창 가득 구매. 권총 미보유 시 구매 불가.
+func _on_buy_ammo_pressed() -> void:
+	if not visible or InventoryManager.count_of(AMMO_ID) <= 0:
+		return
+	if not GameState.spend_coins(AMMO_PRICE):
+		return
+	InventoryManager.refill_magazine(AMMO_ID)
 	_refresh()
 
 

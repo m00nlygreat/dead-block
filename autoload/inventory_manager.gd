@@ -150,8 +150,10 @@ func weapon_used() -> void:
 
 ## 원거리 무기의 장탄수(내구도)를 최대치로 보충. 이미 보유 시 새 슬롯 없음.
 func _refill_magazine(id: String) -> void:
+	if not count_of(id):
+		return
 	var item = ItemDB.get_item(id)
-	if item == null:
+	if item == null or not item.is_ranged:
 		return
 	durabilities[id] = item.durability
 	if equipped_weapon_id == id:
@@ -159,6 +161,12 @@ func _refill_magazine(id: String) -> void:
 	_register_hotbar(id)
 	inventory_changed.emit()
 	weapon_changed.emit()
+	hotbar_changed.emit()
+
+
+## 공개: 보유 중인 원거리 무기의 장탄수를 최대치로 보충(상점 구매 등).
+func refill_magazine(id: String) -> void:
+	_refill_magazine(id)
 
 
 func use_durability(id: String) -> void:

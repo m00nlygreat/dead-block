@@ -487,7 +487,9 @@ func _update_combat(delta: float) -> void:
 		return
 	var item = InventoryManager.get_equipped_item()
 	var is_ranged_weapon: bool = item != null and item.is_weapon() and item.is_ranged
-	if is_ranged_weapon:
+	## 빈 권총(장탄 0)은 발사 대신 주먹 평타로 대체(REQUIREMENT.md)
+	var empty_ranged: bool = is_ranged_weapon and InventoryManager.equipped_durability <= 0
+	if is_ranged_weapon and not empty_ranged:
 		if Input.is_action_pressed("attack") and Input.is_action_pressed("aim") \
 				and not is_searching() and not is_consuming() and _ranged_cd <= 0.0 \
 				and InventoryManager.equipped_durability > 0:
@@ -499,6 +501,9 @@ func _update_combat(delta: float) -> void:
 func _get_weapon_stats() -> Dictionary:
 	var item = InventoryManager.get_equipped_item()
 	if item != null and item.is_weapon():
+		## 빈 권총(장탄 0)은 주먹 평타 스탯 사용(REQUIREMENT.md)
+		if item.is_ranged and InventoryManager.equipped_durability <= 0:
+			return _fist_stats()
 		## 배트 강화 업그레이드는 배트 장착 중에만 적용(REQUIREMENT.md)
 		var is_bat: bool = item.id == "weapon_bat"
 		return {
@@ -511,6 +516,10 @@ func _get_weapon_stats() -> Dictionary:
 			"knockback": item.knockback * (bat_knockback_mult if is_bat else 1.0),
 			"stagger": item.stagger_time,
 		}
+	return _fist_stats()
+
+
+func _fist_stats() -> Dictionary:
 	return {
 		"damage": MELEE_DAMAGE * damage_mult,
 		"reach": MELEE_REACH,
@@ -559,14 +568,16 @@ func _melee_attack() -> void:
 	_melee_cd = float(ws["cooldown"])
 	var clip := "attack-melee-right"
 	var item = InventoryManager.get_equipped_item()
-	if item != null and item.is_weapon():
+	## 빈 권총(장탄 0)은 주먹 동작·잔상 사용(REQUIREMENT.md)
+	var empty_gun: bool = item != null and item.is_ranged and InventoryManager.equipped_durability <= 0
+	if item != null and item.is_weapon() and not empty_gun:
 		if KNIFE_LIKE_IDS.has(item.id) and _anim.has_animation(KnifeStab.CLIP_NAME):
 			clip = KnifeStab.CLIP_NAME
 		elif _anim.has_animation(BatSwing.CLIP_NAME):
 			clip = BatSwing.CLIP_NAME
 	_play_oneshot(clip)
 	var trail_color := FIST_TRAIL_COLOR
-	if item != null and item.is_weapon():
+	if item != null and item.is_weapon() and not empty_gun:
 		trail_color = KNIFE_TRAIL_COLOR if KNIFE_LIKE_IDS.has(item.id) else BAT_TRAIL_COLOR
 	_swing_trail.play(float(ws["reach"]), float(ws["arc"]), trail_color)
 	NoiseSystem.emit_noise(global_position, 5.0, 0)
@@ -596,7 +607,11 @@ func _melee_hit(ws: Dictionary) -> void:
 			float(ws["knockback"]), float(ws["stagger"])
 		)
 	if n > 0 and InventoryManager.get_equipped_item() != null:
-		InventoryManager.weapon_used()
+		## 빈 권총 주먹 공격은 탄약(내구도)을 소모하지 않는다(REQUIREMENT.md)
+		var e_item = InventoryManager.get_equipped_item()
+		var empty_gun: bool = e_item != null and e_item.is_ranged and InventoryManager.equipped_durability <= 0
+		if not empty_gun:
+			InventoryManager.weapon_used()
 
 
 func _play_oneshot(name: String) -> void:

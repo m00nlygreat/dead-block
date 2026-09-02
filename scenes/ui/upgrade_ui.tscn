@@ -83,6 +83,12 @@ size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 24
 text = "생수 · 5 코인"
 
+[node name="BuyAmmo" type="Button" parent="Root/Columns/CenterCol"]
+custom_minimum_size = Vector2(520, 130)
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 24
+text = "권총 탄창 가득 · 7 코인"
+
 [node name="RightCol" type="VBoxContainer" parent="Root/Columns"]
 size_flags_horizontal = 3
 theme_override_constants/separation = 14
