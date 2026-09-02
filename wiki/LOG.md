@@ -247,7 +247,14 @@ usage: "중요한 결정, 새 사실, 범위 변경, 설계 방향 변경이 생
 - **옵션 B 후속 — "그냥 어두운 회색"으로 확정(2026-08-27)**: 사용자 재피드백 "여전히 흰색 / 색이 다 똑같다". 원인 조사(Forward+ 픽셀 프리뷰): 이 프로젝트의 조명(WorldEnvironment ambient_light_energy=0.7 + 태양)이 `ALBEDO`를 항상 밝혀, **shaded 셰이더로는 어두운 회색을 만들 수 없음**(search_tone 0.05로 낮춰도 화면 avg_lum 불변). 해결: `render_mode unshaded`로 라이팅(ambient·태양)을 완전 배제하고 `ALBEDO = vec3(search_tone)` 상수(0.28)로 칠함 — 어떤 조명에서도 일정한 어두운 회색. 알파는 원본 텍스처 보존. Forward+ 프리뷰로 채도 0(무채색) 렌더 확정.
 - **확인된 사실(헤드리스 한계)**: Dummy 렌더러에서는 spatial 셰이더 코드가 로드되지 않아("Shader type not supported"), 셰이더 내용 검증은 자동화 불가. 셰이더 연결 사실은 오버라이드 재질 존재로 확인(T5/T9 `is_grayscale_applied`), 셰이더 시각은 게임(Forward+)에서만 확인. m67에 T10(셰이더 내용 검사)을 추가했으나 헤드리스에서는 판정 불가 → 스킵 처리로 통과.
 
-## 2026-09-01 (9mm 권총 도입 — 원거리 무기 + 장탄/습득 규칙)
+## 2026-09-02 (웹 빌드 버그 3건 수정 — 익스포트 .remap 로드 + 한글 폰트)
+
+- 사용자 보고(웹 빌드에서만): ①한글 폰트 미표시 ②E홀드로 아이템 픽업 불가 ③수색 시 아이템이 인벤토리에 추가되지 않고 바닥에 드롭.
+- **루트 원인 1(픽업·수색)** — PCK 프로브로 확증: 익스포트(웹·데스크톱 공통)에서 `resources/items/*.tres`는 **`*.tres.remap` 파일명**으로 저장됨. `item_db.gd`/`upgrade_manager.gd`의 `ends_with(".tres")` 필터가 전부 skip → ItemDB 0개·업그레이드 풀 0개 → `add_item`이 0 반환 → 수색 결과가 전량 바닥 드롭(#3), E홀드 픽업이 완료되지 못함(#2), 안전가옥 업그레이드 목록 공백. 에디터(F5)는 실제 파일이라 발견이 늦었음.
+  - 수정: 파일명에서 `.remap`을 벗겨 원래 경로로 `load()`. PCK 재검증: ItemDB 15/15, 업그레이드 10/10, `add_item` 1.
+- **루트 원인 2(한글 폰트)** — SystemFont는 iOS/Linux/macOS/Windows에서만 구현, **웹에서는 기본 테마 폰트로 폴백**되고 기본 폰트는 Latin/Greek/Cyrillic만 지원 → 한글 글리프 누락. hud/upgrade_ui/item_pickup의 SystemFont 사용처 + 전역 기본 폰트가 범위.
+  - 수정: Noto Sans KR(OFL)를 한글+로마자 서브셋으로 변환(fontTools, 16.4→1.2MB)해 `assets/fonts/`에 추가, `project.godot gui/theme/custom_font` 전역 지정, 3개 씬의 SystemFont를 번들 FontFile로 교체.
+- 검증: smoke 33개 전부 완주. m38의 false 단정(T3/T4/T6)은 **이번 변경과 무관한 기존 이슈**(요기준선 재현, m46 1회용 정책 이전의 다회용 시맨틱을 검사하는 구형 테스트). GitHub Pages CI(barichello/godot-ci:4.7) 재배포로 웹 재검증 예정.
 
 - 사용자 요청에 따라 9mm 권총(원거리 무기) 구현. Kenney 배포 중단으로 보류됐던 화기를 커스텀 저폴리 모델로 도입(시작 지점 테스트용 `stage1.tscn` 비치).
 - **발사 방식**: 좌클릭+우클릭(조준) 동시 홀드 시 연사 — 좌·우 각각이 홀드 상태여야 발사되고, 홀드 유지 시 연사(클릭 즉발 아님). 발사 모션 없음(요구: "그냥 모션 없게" — 배트 스윙 클립 재생 제거).

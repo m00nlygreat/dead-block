@@ -32,8 +32,10 @@ func _load_pool() -> void:
 	dir.list_dir_begin()
 	var fname := dir.get_next()
 	while fname != "":
-		if not dir.current_is_dir() and fname.ends_with(".tres"):
-			var res = ResourceLoader.load(UPGRADE_DIR + "/" + fname)
+		## 익스포트(웹 포함)에서는 파일명이 .tres.remap으로 저장되므로 원래 경로로 복원한다.
+		var base := fname.trim_suffix(".remap") if fname.ends_with(".remap") else fname
+		if not dir.current_is_dir() and base.ends_with(".tres"):
+			var res = ResourceLoader.load(UPGRADE_DIR + "/" + base)
 			if res is UpgradeData:
 				_pool.append(res)
 		fname = dir.get_next()

@@ -2,8 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/world/item_pickup.gd" id="1"]
 
-[sub_resource type="SystemFont" id="sysfont"]
-font_names = PackedStringArray("Malgun Gothic", "Gulim")
+[ext_resource type="FontFile" path="res://assets/fonts/NotoSansKR-Regular.otf" id="2"]
 
 [sub_resource type="SphereShape3D" id="shape"]
 radius = 0.4
@@ -30,4 +29,4 @@ billboard = 1
 no_depth_test = true
 pixel_size = 0.004
 text = "아이템"
-font = SubResource("sysfont")
+font = ExtResource("2")
