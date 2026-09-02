@@ -23,7 +23,7 @@ func _ready() -> void:
 	mat.no_depth_test = true
 	mat.render_priority = 10
 	material_override = mat
-	visible = false
+	visible = true
 
 
 func start(radius: float) -> void:
