@@ -91,6 +91,8 @@ var _starve_t := 0.0
 var _consume_item: ItemData = null
 var _consume_id := ""
 var _consume_progress := 0.0
+var _footstep_timer := 0.0
+const FOOTSTEP_INTERVAL := 0.2
 
 ## 런 한정 성장 배율(XpManager 레벨업 업그레이드로 증가)
 var move_speed_mult := 1.0
@@ -252,12 +254,23 @@ func _physics_process(delta: float) -> void:
 	velocity.z = move_toward(velocity.z, target_vel.z, rate * delta * WALK_SPEED * 2.0)
 
 	move_and_slide()
+	_update_footstep_noise(delta, moving, sprinting)
 	_update_facing(delta, aiming, moving)
 	_update_animation(sprinting, aiming)
 	_update_interaction(delta, moving)
 	_update_combat(delta)
 	_update_survival(delta)
 	_update_consuming(delta)
+
+
+func _update_footstep_noise(delta: float, moving: bool, sprinting: bool) -> void:
+	if not moving or _dead:
+		_footstep_timer = 0.0
+		return
+	_footstep_timer += delta
+	if _footstep_timer >= FOOTSTEP_INTERVAL:
+		_footstep_timer -= FOOTSTEP_INTERVAL
+		NoiseSystem.emit_walk_noise(global_position, sprinting)
 
 
 func _move_speed(sprinting: bool, dir: Vector3) -> float:
@@ -559,7 +572,7 @@ func _ranged_attack(item) -> void:
 		item.reach
 	)
 	get_tree().current_scene.add_child(bullet)
-	NoiseSystem.emit_noise(global_position, 5.0, 0)
+	NoiseSystem.emit_gun_noise(global_position)
 	InventoryManager.weapon_used()
 
 
@@ -580,7 +593,7 @@ func _melee_attack() -> void:
 	if item != null and item.is_weapon() and not empty_gun:
 		trail_color = KNIFE_TRAIL_COLOR if KNIFE_LIKE_IDS.has(item.id) else BAT_TRAIL_COLOR
 	_swing_trail.play(float(ws["reach"]), float(ws["arc"]), trail_color)
-	NoiseSystem.emit_noise(global_position, 5.0, 0)
+	NoiseSystem.emit_melee_noise(global_position)
 	get_tree().create_timer(float(ws["hit_delay"])).timeout.connect(_melee_hit.bind(ws))
 
 

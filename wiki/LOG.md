@@ -247,7 +247,15 @@ usage: "중요한 결정, 새 사실, 범위 변경, 설계 방향 변경이 생
 - **옵션 B 후속 — "그냥 어두운 회색"으로 확정(2026-08-27)**: 사용자 재피드백 "여전히 흰색 / 색이 다 똑같다". 원인 조사(Forward+ 픽셀 프리뷰): 이 프로젝트의 조명(WorldEnvironment ambient_light_energy=0.7 + 태양)이 `ALBEDO`를 항상 밝혀, **shaded 셰이더로는 어두운 회색을 만들 수 없음**(search_tone 0.05로 낮춰도 화면 avg_lum 불변). 해결: `render_mode unshaded`로 라이팅(ambient·태양)을 완전 배제하고 `ALBEDO = vec3(search_tone)` 상수(0.28)로 칠함 — 어떤 조명에서도 일정한 어두운 회색. 알파는 원본 텍스처 보존. Forward+ 프리뷰로 채도 0(무채색) 렌더 확정.
 - **확인된 사실(헤드리스 한계)**: Dummy 렌더러에서는 spatial 셰이더 코드가 로드되지 않아("Shader type not supported"), 셰이더 내용 검증은 자동화 불가. 셰이더 연결 사실은 오버라이드 재질 존재로 확인(T5/T9 `is_grayscale_applied`), 셰이더 시각은 게임(Forward+)에서만 확인. m67에 T10(셰이더 내용 검사)을 추가했으나 헤드리스에서는 판정 불가 → 스킵 처리로 통과.
 
-## 2026-09-02 (웹 빌드 버그 3건 수정 — 익스포트 .remap 로드 + 한글 폰트)
+## 2026-09-02 (행동별 소음 시스템 + 원형 파동 비주얼)
+
+- 사용자 지시: 플레이어의 모든 행동이 소음을 발생시키고, 소음은 플레이어 발치에서 퍼지는 **원형 파동 효과**로 시각화한다. 이동(걸음·달림 200ms마다)·주먹/평타(가격 시)·총(발사 시).
+- **행동별 전달 반경** 정리(noise_system.gd 상수): 걷기 6m / 달리기 10m / 근접(주먹·무기) 5m / 총 15m(기존 발사 5m → 15m로 상향).
+- **원형 파동**: `scripts/util/noise_ripple.gd`(class NoiseRipple, ImmediateMesh 기반 원형 링)가 발치(Y 0.08)에서 최대 반경까지 0.45초에 걸쳐 퍼진 후 소멸. 행동별 색상(걷기 연파랑 / 달리기 파랑 / 근접 주황 / 총 빨강). unshaded StandardMaterial3D만 사용해 Forward+·웹(Compatibility) 모두 동작.
+- **구현 변경**: `noise_system.gd`에 행동별 래퍼(emit_walk_noise/emit_melee_noise/emit_gun_noise) + 파동 스폰 추가, 색상이 다른 emit_noise는 시그널·좀비 반응은 동일하게 유지. `player.gd`에 200ms 이동 소음 타이머(`_update_footstep_noise`, FOOTSTEP_INTERVAL=0.2), 근접·총 호출을 전용 래퍼로 교체.
+- 검증: noise_smoke 신규 테스트 6항목(파동 3색 생성, 총 15m 반경, 걷기 6m 반경, 근접 5m 반경, 반경 밖 무시, 200ms 이동 타이머 4회 발생) 전부 통과. 회귀 m1/m3/m9mm/m35/m60 통과. Win64 오프라인 빌드 + 웹 익스포트 생성, GitHub Pages CI 재배포 예정.
+
+
 
 - 사용자 보고(웹 빌드에서만): ①한글 폰트 미표시 ②E홀드로 아이템 픽업 불가 ③수색 시 아이템이 인벤토리에 추가되지 않고 바닥에 드롭.
 - **루트 원인 1(픽업·수색)** — PCK 프로브로 확증: 익스포트(웹·데스크톱 공통)에서 `resources/items/*.tres`는 **`*.tres.remap` 파일명**으로 저장됨. `item_db.gd`/`upgrade_manager.gd`의 `ends_with(".tres")` 필터가 전부 skip → ItemDB 0개·업그레이드 풀 0개 → `add_item`이 0 반환 → 수색 결과가 전량 바닥 드롭(#3), E홀드 픽업이 완료되지 못함(#2), 안전가옥 업그레이드 목록 공백. 에디터(F5)는 실제 파일이라 발견이 늦었음.
