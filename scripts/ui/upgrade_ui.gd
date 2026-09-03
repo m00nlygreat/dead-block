@@ -266,5 +266,6 @@ func _unhandled_input(event: InputEvent) -> void:
 func _close() -> void:
 	if not visible:
 		return
+	UpgradeManager.visit_over()
 	get_tree().paused = false
 	visible = false

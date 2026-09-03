@@ -15,6 +15,8 @@ const CHOICE_COUNT := 3
 
 var kills := 0
 var upgrade_levels := {}
+## 이번 안전가옥 방문에서 이미 구매한 업그레이드 id 목록
+var _purchased_this_visit: Array[String] = []
 
 var _pool: Array[UpgradeData] = []
 
@@ -71,6 +73,8 @@ func purchase(id: String) -> bool:
 	if not GameState.spend_coins(cost_of(up)):
 		return false
 	upgrade_levels[id] = upgrade_level(id) + 1
+	if not _purchased_this_visit.has(id):
+		_purchased_this_visit.append(id)
 	_apply_to_player(up)
 	upgrade_applied.emit(up)
 	return true
@@ -79,7 +83,8 @@ func purchase(id: String) -> bool:
 func draw_choices() -> Array[UpgradeData]:
 	var avail: Array[UpgradeData] = []
 	for u in _pool:
-		if upgrade_level(u.id) < u.max_level:
+		if upgrade_level(u.id) < u.max_level \
+				and not _purchased_this_visit.has(u.id):
 			avail.append(u)
 	var picks: Array[UpgradeData] = []
 	while picks.size() < mini(CHOICE_COUNT, avail.size()):
@@ -104,7 +109,13 @@ func draw_choices() -> Array[UpgradeData]:
 func reset_run() -> void:
 	kills = 0
 	upgrade_levels.clear()
+	visit_over()
 	kills_changed.emit(kills)
+
+
+## 안전가옥 닫힘 시 호출: 이번 방문 구매 내역 초기화
+func visit_over() -> void:
+	_purchased_this_visit.clear()
 
 
 func _find(id: String) -> UpgradeData:
