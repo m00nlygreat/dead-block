@@ -5,8 +5,8 @@ extends MeshInstance3D
 ## 고정된 단위 디스크 메시를 한 번 만들고 scale로 반지름을 제어해, 매 프레임 재생성 없이 깨지지 않게 한다.
 
 const GROUND_Y := 0.15
-const COLOR := Color(0.1, 0.1, 0.13)
-const ALPHA := 0.3
+const COLOR := Color(0.08, 0.08, 0.1)
+const ALPHA := 0.18
 const MAX_RADIUS := 30.0
 const UP_RESPONSE := 8.0
 const DOWN_RESPONSE := 4.0
@@ -29,7 +29,7 @@ func _ready() -> void:
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.albedo_color = Color(COLOR.r, COLOR.g, COLOR.b, ALPHA)
-	mat.no_depth_test = false
+	mat.no_depth_test = true
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat.render_priority = 5
 	material_override = mat
