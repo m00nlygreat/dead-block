@@ -4,7 +4,7 @@ extends MeshInstance3D
 ## 상시 유지되는 소음 차트: 플레이어 중심 반투명 채워진 원(디스크)의 반지름으로 현재 소음량을 표현한다.
 ## 고정된 단위 디스크 메시를 한 번 만들고 scale로 반지름을 제어해, 매 프레임 재생성 없이 깨지지 않게 한다.
 
-const GROUND_Y := 0.04
+const GROUND_Y := 0.15
 const COLOR := Color(0.1, 0.1, 0.13)
 const ALPHA := 0.3
 const MAX_RADIUS := 30.0
