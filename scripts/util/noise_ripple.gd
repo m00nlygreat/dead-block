@@ -1,10 +1,9 @@
 class_name NoiseRipple
 extends MeshInstance3D
 
-## 상시 유지되는 소음 차트: 플레이어 중심 단일 원 기둥의 반지름으로 현재 소음량을 표현한다.
+## 상시 유지되는 소음 차트: 플레이어 중심 반투명 채워진 원(디스크)의 반지름으로 현재 소음량을 표현한다.
 
 const SEGMENTS := 48
-const WALL_HEIGHT := 0.5
 const GROUND_Y := 0.04
 const COLOR := Color(1.0, 1.0, 1.0)
 const MAX_RADIUS := 30.0
@@ -24,6 +23,7 @@ func _ready() -> void:
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.vertex_color_use_as_albedo = true
 	mat.no_depth_test = true
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat.render_priority = 5
 	material_override = mat
 	visible = true
@@ -47,18 +47,19 @@ func _process(delta: float) -> void:
 	_rebuild()
 
 
-## 단일 층: 원주를 따라 세운 얇은 반투명 원기둥 벽 하나만 렌더링한다.
+## 테두리 없는 반투명 채워진 원: 발치 중심 디스크. 양면 렌더링으로 어떤 시점에서도 풀 원으로 보인다.
 func _rebuild() -> void:
 	_im.clear_surfaces()
 	if _current_radius < 0.01:
 		return
-	_im.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
-	for i in SEGMENTS + 1:
-		var angle := TAU * float(i % SEGMENTS) / SEGMENTS
-		var cx := cos(angle)
-		var cz := sin(angle)
-		_im.surface_set_color(Color(COLOR.r, COLOR.g, COLOR.b, 0.02))
-		_im.surface_add_vertex(Vector3(cx * _current_radius, GROUND_Y, cz * _current_radius))
-		_im.surface_set_color(Color(COLOR.r, COLOR.g, COLOR.b, 0.05))
-		_im.surface_add_vertex(Vector3(cx * _current_radius, GROUND_Y + WALL_HEIGHT, cz * _current_radius))
+	_im.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in SEGMENTS:
+		var a0 := TAU * float(i) / SEGMENTS
+		var a1 := TAU * float(i + 1) / SEGMENTS
+		_im.surface_set_color(Color(COLOR.r, COLOR.g, COLOR.b, 0.055))
+		_im.surface_add_vertex(Vector3(0.0, GROUND_Y, 0.0))
+		_im.surface_set_color(Color(COLOR.r, COLOR.g, COLOR.b, 0.055))
+		_im.surface_add_vertex(Vector3(cos(a0) * _current_radius, GROUND_Y, sin(a0) * _current_radius))
+		_im.surface_set_color(Color(COLOR.r, COLOR.g, COLOR.b, 0.055))
+		_im.surface_add_vertex(Vector3(cos(a1) * _current_radius, GROUND_Y, sin(a1) * _current_radius))
 	_im.surface_end()
