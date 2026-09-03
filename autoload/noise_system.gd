@@ -29,13 +29,18 @@ func emit_noise(pos: Vector3, radius: float, priority: int = 0) -> void:
 	_chart_add(radius)
 
 
-func emit_walk_noise(pos: Vector3, sprinting: bool) -> void:
+func emit_walk_noise(pos: Vector3, sprinting: bool, sneaking := false) -> void:
 	var radius := SPRINT_NOISE_RADIUS if sprinting else WALK_NOISE_RADIUS
+	if sneaking:
+		radius *= 0.65
 	emit_noise(pos, radius, 0)
 
 
-func emit_melee_noise(pos: Vector3) -> void:
-	emit_noise(pos, MELEE_NOISE_RADIUS, 0)
+func emit_melee_noise(pos: Vector3, sneaking := false) -> void:
+	var radius := MELEE_NOISE_RADIUS
+	if sneaking:
+		radius *= 0.65
+	emit_noise(pos, radius, 0)
 
 
 func emit_gun_noise(pos: Vector3) -> void:

@@ -21,6 +21,13 @@
 - Kenney 에셋(CC0)은 `assets/` 하위에 팩명 폴더로 유지.
 - 물리 레이어: 1 world / 2 player / 3 zombie / 4 interactable / 5 projectile.
 
+## 디버그 실행 (필수 준수)
+
+- **디버그 콘솔**: `autoload/debug_console.gd`. **`--debug-console` 인자로만 활성화**된다(`--debug`·`--console`도 동일). 인자 없이 실행하면 `/` 키 콘솔이 뜨지 않는다.
+- `debug.ps1`(Windows) / `debug.sh`(Linux·macOS)는 `--debug-console --verbose`를 포함한 디버그 실행 래퍼다. 게임 내 **`/` 키**로 콘솔 토글.
+- 디버그 무한 대기 방지: `--headless` 단독(GDScript) 실행은 `--path`·씬 없이 autoload가 로드되지 않는다. autoload(ItemDB·InventoryManager 등)가 필요한 검증은 **씬 기반 스모크 테스트**(`res://tests/*_smoke.tscn`)로 실행한다. `_ready`에서 `get_tree().quit()`가 headless에서 안 끝나 강제 kill로 이어질 수 있으니, 씬 종료는 `call_deferred("quit")` 또는 스모크 패턴(프레임 대기 후 quit)을 사용한다.
+- 임시 `.gd`/`.tscn`의 untyped 값에 `:=` 타입 추론을 쓰면 파스 에러가 나므로 명시 타입을 붙인다(예: `var is_wpn: bool = item.is_weapon()`).
+
 ## 웹 빌드 호환성 (필수 준수)
 
 - 배포 대상이 **웹(GitHub Pages)**이므로, 모든 변경은 웹 빌드에서도 동작함을 전제로 한다. 에디터(F5)에서만 확인하고 넘어가지 않는다.

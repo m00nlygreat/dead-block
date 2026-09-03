@@ -79,17 +79,19 @@ func _run() -> void:
 	ui._refresh()
 	var blade_ok_pre: bool = not ui._craft_buttons["weapon_blade"].disabled
 	ui._on_craft_pressed("weapon_blade")
+	var _s64 = InventoryManager._find_first_slot_of("weapon_blade")
+	var _dur64: int = InventoryManager.slots[_s64]["durability"] if _s64 != -1 else -1
 	print("T5_CRAFT_BLADE_2SCRAP_1CLOTH: ",
 		blade_ok_pre
 		and InventoryManager.count_of("weapon_blade") == 1
 		and InventoryManager.count_of("scrap_metal") == 0
 		and InventoryManager.count_of("cloth") == 2
-		and int(InventoryManager.durabilities.get("weapon_blade", -1)) == 7,
+		and _dur64 == 7,
 		" (blade=%d scrap=%d cloth=%d dur=%d)" % [
 			InventoryManager.count_of("weapon_blade"),
 			InventoryManager.count_of("scrap_metal"),
 			InventoryManager.count_of("cloth"),
-			int(InventoryManager.durabilities.get("weapon_blade", -1))])
+			_dur64])
 
 	var bandage_before: int = InventoryManager.count_of("bandage")
 	ui._refresh()

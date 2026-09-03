@@ -62,6 +62,13 @@ const KNIFE_TRAIL_COLOR := Color(0.75, 0.85, 1.0)
 ## 권총 사격 시 손 끝 위치에서 전방 오프셋(m)
 const PISTOL_MUZZLE_OFFSET := 0.5
 
+## 은신 시 시각 효과
+const CROUCH_MODEL_Y := -0.25
+const CROUCH_COLLISION_HEIGHT := 0.9
+const CROUCH_COLLISION_Y := 0.45
+const CROUCH_LERP_SPEED := 10.0
+const CROUCH_TORSO_X := -0.55
+
 @export var model_yaw_offset := PI
 @export var max_hp := 100.0
 @export var max_stamina := 100.0
@@ -104,10 +111,14 @@ var bat_reach_bonus := 0.0
 var bat_targets_bonus := 0
 var bat_knockback_mult := 1.0
 
+var sneaking := false
+var _crouch_t := 0.0
+
 @onready var _model: Node3D = $Model
 @onready var _interact_area: Area3D = $InteractArea
 @onready var _swing_trail: SwingTrail = $SwingTrail
 @onready var _pickup_attractor: Area3D = $PickupAttractor
+@onready var _torso: Node3D = _model.find_child("torso", true, false)
 
 
 func _ready() -> void:
@@ -172,7 +183,7 @@ func _update_pickup_radius() -> void:
 
 const ACTIONS_TO_RELEASE := [
 	"move_up", "move_down", "move_left", "move_right",
-	"sprint", "interact", "attack", "aim", "inventory", "reload", "dodge",
+	"sprint", "interact", "attack", "aim", "inventory", "reload", "dodge", "sneak",
 ]
 
 
@@ -261,6 +272,7 @@ func _physics_process(delta: float) -> void:
 	_update_combat(delta)
 	_update_survival(delta)
 	_update_consuming(delta)
+	_update_crouch_visual(delta)
 
 
 func _update_footstep_noise(delta: float, moving: bool, sprinting: bool) -> void:
@@ -270,7 +282,19 @@ func _update_footstep_noise(delta: float, moving: bool, sprinting: bool) -> void
 	_footstep_timer += delta
 	if _footstep_timer >= FOOTSTEP_INTERVAL:
 		_footstep_timer -= FOOTSTEP_INTERVAL
-		NoiseSystem.emit_walk_noise(global_position, sprinting)
+		NoiseSystem.emit_walk_noise(global_position, sprinting, sneaking)
+
+
+func _update_crouch_visual(delta: float) -> void:
+	var target := 1.0 if sneaking else 0.0
+	_crouch_t = move_toward(_crouch_t, target, CROUCH_LERP_SPEED * delta)
+	_model.position.y = lerpf(0.0, CROUCH_MODEL_Y, _crouch_t)
+	if _torso != null:
+		_torso.rotation.x = lerpf(0.0, CROUCH_TORSO_X, _crouch_t)
+	var cs: CollisionShape3D = $Collision
+	if cs.shape is CapsuleShape3D:
+		cs.shape.height = lerpf(1.3, CROUCH_COLLISION_HEIGHT, _crouch_t)
+		cs.position.y = lerpf(0.65, CROUCH_COLLISION_Y, _crouch_t)
 
 
 func _move_speed(sprinting: bool, dir: Vector3) -> float:
@@ -282,7 +306,10 @@ func _move_speed(sprinting: bool, dir: Vector3) -> float:
 	fwd = fwd.normalized()
 	if fwd.dot(dir.normalized()) < -0.35:
 		speed *= BACKPEDAL_MULT
-	return speed * move_speed_mult
+	speed *= move_speed_mult
+	if sneaking:
+		speed *= 0.7
+	return speed
 
 
 func take_damage(amount: float) -> void:
@@ -298,6 +325,11 @@ func take_damage(amount: float) -> void:
 
 func _die() -> void:
 	_dead = true
+	sneaking = false
+	_crouch_t = 0.0
+	_model.position.y = 0.0
+	if _torso != null:
+		_torso.rotation.x = 0.0
 	velocity = Vector3.ZERO
 	died.emit()
 	if _anim != null and _anim.has_animation("die"):
@@ -472,6 +504,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			InventoryManager.set_selected(k - KEY_1)
 		elif k == KEY_Q:
 			_drop_selected()
+		elif k == KEY_CTRL:
+			sneaking = not sneaking
 	elif event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			InventoryManager.cycle_selected(-1)
@@ -593,7 +627,7 @@ func _melee_attack() -> void:
 	if item != null and item.is_weapon() and not empty_gun:
 		trail_color = KNIFE_TRAIL_COLOR if KNIFE_LIKE_IDS.has(item.id) else BAT_TRAIL_COLOR
 	_swing_trail.play(float(ws["reach"]), float(ws["arc"]), trail_color)
-	NoiseSystem.emit_melee_noise(global_position)
+	NoiseSystem.emit_melee_noise(global_position, sneaking)
 	get_tree().create_timer(float(ws["hit_delay"])).timeout.connect(_melee_hit.bind(ws))
 
 
@@ -675,7 +709,7 @@ func _update_interaction(delta: float, moving: bool) -> void:
 	var st_v = target.get("search_time")
 	var duration: float = maxf(st_v if st_v != null else 0.05, 0.01)
 
-	_search_progress += delta
+	_search_progress += delta * (0.7 if sneaking else 1.0)
 	if _search_progress >= duration:
 		target.complete_interaction(self)
 		_search_target = null

@@ -95,7 +95,9 @@ func _run() -> void:
 	## — 빈 권총 주먹 평타 —
 	## 장탄을 0으로 만든다.
 	InventoryManager.equipped_durability = 0
-	InventoryManager.durabilities["weapon_9mm"] = 0
+	var _s68 = InventoryManager._find_first_slot_of("weapon_9mm")
+	if _s68 != -1:
+		InventoryManager.slots[_s68]["durability"] = 0
 	var z: Zombie = ZOMBIE_SCENE.instantiate()
 	w.add_child(z)
 	z.set_physics_process(false)

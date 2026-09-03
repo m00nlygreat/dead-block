@@ -27,7 +27,10 @@ func interact_label() -> String:
 
 func complete_interaction(_by: Node) -> void:
 	searched = true
-	NoiseSystem.emit_noise(global_position, noise_radius, 1)
+	var nr := noise_radius
+	if _by.get("sneaking"):
+		nr *= 0.65
+	NoiseSystem.emit_noise(global_position, nr, 1)
 	_apply_searched_visual()
 	if randf() >= empty_chance:
 		for r in loot_table.roll():

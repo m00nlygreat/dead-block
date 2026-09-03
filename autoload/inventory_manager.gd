@@ -15,7 +15,6 @@ var quick_slots: Array = []
 var equipped_weapon_id := ""
 var equipped_durability := 0
 var selected_slot := 0
-var durabilities := {}
 
 
 func _ready() -> void:
@@ -43,27 +42,27 @@ func add_item(id: String, qty: int = 1, initial_durability := -1) -> int:
 		_refill_magazine(id)
 		return qty
 	var added := 0
+	var is_wpn: bool = item.is_weapon()
 	while added < qty:
 		if total_weight() + item.weight > MAX_WEIGHT:
 			break
-		var stack_idx := _find_stackable(id, item.max_stack)
+		## 무기(장비)는 슬롯에 겹치지 않는다 — 내구도가 슬롯별로 독립돼야 하므로.
+		var stack_idx := -1 if is_wpn else _find_stackable(id, item.max_stack)
 		if stack_idx != -1:
 			slots[stack_idx]["qty"] += 1
 		else:
 			var empty_idx := _first_empty()
 			if empty_idx == -1:
 				break
-			slots[empty_idx] = {"id": id, "qty": 1}
+			var start_dur: int = item.durability
+			if initial_durability >= 0:
+				start_dur = mini(initial_durability, item.durability)
+			slots[empty_idx] = {"id": id, "qty": 1, "durability": start_dur}
 		added += 1
 	if added > 0:
 		inventory_changed.emit()
 		item_gained.emit(id, added)
 		_register_hotbar(id)
-		if not durabilities.has(id):
-			var start_dur: int = item.durability
-			if initial_durability >= 0:
-				start_dur = mini(initial_durability, item.durability)
-			durabilities[id] = start_dur
 		_sync_equipped_with_selection()
 	return added
 
@@ -101,7 +100,6 @@ func _unregister_if_empty(id: String) -> void:
 	for i in HOTBAR_SIZE:
 		if quick_slots[i] == id:
 			quick_slots[i] = null
-	durabilities.erase(id)
 	hotbar_changed.emit()
 
 
@@ -112,7 +110,11 @@ func equip(id: String) -> void:
 	if count_of(id) <= 0:
 		return
 	equipped_weapon_id = id
-	equipped_durability = int(durabilities[id]) if durabilities.has(id) else item.durability
+	var slot_idx := _find_first_slot_of(id)
+	if slot_idx != -1:
+		equipped_durability = slots[slot_idx]["durability"]
+	else:
+		equipped_durability = item.durability
 	weapon_changed.emit()
 
 
@@ -135,15 +137,23 @@ func weapon_used() -> void:
 	if item == null:
 		return
 	equipped_durability -= 1
-	durabilities[equipped_weapon_id] = equipped_durability
+	var slot_idx := _find_first_slot_of(equipped_weapon_id)
+	if slot_idx != -1:
+		slots[slot_idx]["durability"] = equipped_durability
 	if equipped_durability <= 0:
 		if item.is_ranged:
 			## 원거리 무기는 0발이 돼도 파손되지 않고 유지(장전 대기).
 			equipped_durability = 0
-			durabilities[equipped_weapon_id] = 0
+			if slot_idx != -1:
+				slots[slot_idx]["durability"] = 0
 			weapon_changed.emit()
 		else:
 			remove_one_of(equipped_weapon_id)
+			if count_of(equipped_weapon_id) > 0:
+				var new_idx := _find_first_slot_of(equipped_weapon_id)
+				if new_idx != -1:
+					slots[new_idx]["durability"] = item.durability
+				equipped_durability = item.durability
 	else:
 		weapon_changed.emit()
 
@@ -155,7 +165,9 @@ func _refill_magazine(id: String) -> void:
 	var item = ItemDB.get_item(id)
 	if item == null or not item.is_ranged:
 		return
-	durabilities[id] = item.durability
+	var slot_idx := _find_first_slot_of(id)
+	if slot_idx != -1:
+		slots[slot_idx]["durability"] = item.durability
 	if equipped_weapon_id == id:
 		equipped_durability = item.durability
 	_register_hotbar(id)
@@ -176,17 +188,18 @@ func use_durability(id: String) -> void:
 	if item.durability <= 0:
 		remove_one_of(id)
 		return
-	if not durabilities.has(id):
-		durabilities[id] = item.durability
-	var cur: int = int(durabilities[id]) - 1
+	var slot_idx := _find_first_slot_of(id)
+	if slot_idx == -1:
+		return
+	var cur: int = slots[slot_idx]["durability"] - 1
 	if cur <= 0:
 		remove_one_of(id)
 		if count_of(id) > 0:
-			durabilities[id] = item.durability
-		else:
-			durabilities.erase(id)
+			var new_idx := _find_first_slot_of(id)
+			if new_idx != -1:
+				slots[new_idx]["durability"] = item.durability
 	else:
-		durabilities[id] = cur
+		slots[slot_idx]["durability"] = cur
 	hotbar_changed.emit()
 
 
@@ -194,7 +207,12 @@ func get_current_durability(id: String) -> int:
 	var item = ItemDB.get_item(id)
 	if item == null or item.durability <= 0:
 		return -1
-	return equipped_durability if equipped_weapon_id == id else int(durabilities.get(id, item.durability))
+	if equipped_weapon_id == id:
+		return equipped_durability
+	var slot_idx := _find_first_slot_of(id)
+	if slot_idx != -1:
+		return slots[slot_idx]["durability"]
+	return item.durability
 
 
 func remove_one_of(id: String) -> void:
@@ -277,11 +295,18 @@ func reset_run() -> void:
 	equipped_weapon_id = ""
 	equipped_durability = 0
 	selected_slot = 0
-	durabilities.clear()
 	inventory_changed.emit()
 	weapon_changed.emit()
 	hotbar_changed.emit()
 	selected_changed.emit(selected_slot)
+
+
+func _find_first_slot_of(id: String) -> int:
+	for i in MAX_SLOTS:
+		var s = slots[i]
+		if s != null and s["id"] == id:
+			return i
+	return -1
 
 
 func _find_stackable(id: String, max_stack: int) -> int:
