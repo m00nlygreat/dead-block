@@ -2,10 +2,11 @@ class_name NoiseRipple
 extends MeshInstance3D
 
 ## 상시 유지되는 소음 차트: 플레이어 중심 반투명 채워진 원(디스크)의 반지름으로 현재 소음량을 표현한다.
+## 고정된 단위 디스크 메시를 한 번 만들고 scale로 반지름을 제어해, 매 프레임 재생성 없이 깨지지 않게 한다.
 
-const SEGMENTS := 48
 const GROUND_Y := 0.04
 const COLOR := Color(1.0, 1.0, 1.0)
+const ALPHA := 0.055
 const MAX_RADIUS := 30.0
 const UP_RESPONSE := 8.0
 const DOWN_RESPONSE := 4.0
@@ -13,19 +14,27 @@ const DECAY_RATE := 5.0
 
 var _target_radius := 0.0
 var _current_radius := 0.0
-var _im := ImmediateMesh.new()
 
 
 func _ready() -> void:
-	mesh = _im
+	# 단위 반지름(1m) 디스크를 한 번 생성
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 1.0
+	cyl.bottom_radius = 1.0
+	cyl.height = 0.02
+	cyl.radial_segments = 96
+	cyl.rings = 1
+	mesh = cyl
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.vertex_color_use_as_albedo = true
+	mat.albedo_color = Color(COLOR.r, COLOR.g, COLOR.b, ALPHA)
 	mat.no_depth_test = false
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat.render_priority = 5
 	material_override = mat
+	position.y = GROUND_Y
+	scale = Vector3(0.01, 1.0, 0.01)
 	visible = true
 
 
@@ -44,22 +53,6 @@ func _process(delta: float) -> void:
 	# 표시 반지름은 목표로 부드럽게 추적 (상승은 빠르게, 하강은 느리게)
 	var k := 1.0 - exp(-(UP_RESPONSE if _target_radius >= _current_radius else DOWN_RESPONSE) * delta)
 	_current_radius = lerpf(_current_radius, _target_radius, k)
-	_rebuild()
-
-
-## 테두리 없는 반투명 채워진 원: 발치 중심 디스크. 양면 렌더링으로 어떤 시점에서도 풀 원으로 보인다.
-func _rebuild() -> void:
-	_im.clear_surfaces()
-	if _current_radius < 0.01:
-		return
-	_im.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
-	for i in SEGMENTS:
-		var a0 := TAU * float(i) / SEGMENTS
-		var a1 := TAU * float(i + 1) / SEGMENTS
-		_im.surface_set_color(Color(COLOR.r, COLOR.g, COLOR.b, 0.055))
-		_im.surface_add_vertex(Vector3(0.0, GROUND_Y, 0.0))
-		_im.surface_set_color(Color(COLOR.r, COLOR.g, COLOR.b, 0.055))
-		_im.surface_add_vertex(Vector3(cos(a0) * _current_radius, GROUND_Y, sin(a0) * _current_radius))
-		_im.surface_set_color(Color(COLOR.r, COLOR.g, COLOR.b, 0.055))
-		_im.surface_add_vertex(Vector3(cos(a1) * _current_radius, GROUND_Y, sin(a1) * _current_radius))
-	_im.surface_end()
+	# scale로 반지름을 균일하게 확대/축소 (재생성 없이 매끈한 원 유지)
+	scale.x = _current_radius
+	scale.z = _current_radius
