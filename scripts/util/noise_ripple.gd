@@ -22,7 +22,7 @@ func _ready() -> void:
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.vertex_color_use_as_albedo = true
-	mat.no_depth_test = true
+	mat.no_depth_test = false
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat.render_priority = 5
 	material_override = mat
