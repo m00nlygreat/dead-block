@@ -45,10 +45,14 @@ func add_noise(radius: float) -> void:
 
 
 func _process(delta: float) -> void:
-	# 플레이어를 추적해 발치에 상시 유지
+	# 플레이어를 추적해 발치에 상시 유지 (발치 바닥 높이를 따라가도록 Y 사용)
 	var player := get_tree().get_first_node_in_group("player")
 	if player is Node3D:
-		global_position = Vector3(player.global_position.x, 0.0, player.global_position.z)
+		global_position = Vector3(
+			player.global_position.x,
+			player.global_position.y + GROUND_Y,
+			player.global_position.z
+		)
 	# 목표 반지름은 시간이 지나면 감쇠 (소음이 멈추면 점점 줄어듦)
 	_target_radius = maxf(_target_radius - DECAY_RATE * delta, 0.0)
 	# 표시 반지름은 목표로 부드럽게 추적 (상승은 빠르게, 하강은 느리게)
