@@ -29,7 +29,8 @@ func _ready() -> void:
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.albedo_color = Color(COLOR.r, COLOR.g, COLOR.b, ALPHA)
-	mat.no_depth_test = true
+	mat.no_depth_test = false
+	mat.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat.render_priority = 5
 	material_override = mat
