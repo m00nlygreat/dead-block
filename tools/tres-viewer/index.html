@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRES Viewer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>TRES</span> Viewer</h1>
+    <div class="toolbar">
+      <input type="text" id="search" placeholder="검색..." oninput="updateURL()">
+      <select id="filter-type" onchange="updateURL()"><option value="">전체 타입</option></select>
+      <select id="filter-class" onchange="updateURL()"><option value="">전체 클래스</option></select>
+      <button class="btn" onclick="openFolder()">폴더 열기</button>
+      <button class="btn btn-primary" onclick="saveAll()">저장</button>
+    </div>
+  </div>
+
+  <div id="drop-zone" class="empty-state">
+    <p>.tres 파일 또는 폴더를 여기에 드래그하세요<br><small>또는 "폴더 열기" 버튼을 클릭 (Chrome/Edge)</small></p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead id="thead"></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="status-bar" id="status"></div>
+
+  <script src="tres-parser.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
