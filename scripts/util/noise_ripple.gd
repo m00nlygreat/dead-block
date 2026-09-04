@@ -5,8 +5,8 @@ extends MeshInstance3D
 ## 고정된 단위 디스크 메시를 한 번 만들고 scale로 반지름을 제어해, 매 프레임 재생성 없이 깨지지 않게 한다.
 
 const GROUND_Y := 0.15
-const COLOR := Color(0.08, 0.08, 0.1)
-const ALPHA := 0.18
+const COLOR := Color.WHITE
+const ALPHA := 0.03
 const MAX_RADIUS := 30.0
 const UP_RESPONSE := 8.0
 const DOWN_RESPONSE := 4.0

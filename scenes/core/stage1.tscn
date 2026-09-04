@@ -46,6 +46,7 @@ qty = 1
 
 [node name="ZombieSpawner" type="Node" parent="."]
 script = ExtResource("5")
+visibility_dist = 35.0
 
 [node name="Player" parent="." instance=ExtResource("2")]
 

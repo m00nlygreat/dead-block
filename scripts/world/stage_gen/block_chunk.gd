@@ -6,6 +6,7 @@ extends RefCounted
 const CAR_EMPTY_CHANCE := 0.5
 const HOUSE_EMPTY_CHANCE := 0.7
 const HOUSE_LOOT_SCRIPT := preload("res://scripts/world/house_loot.gd")
+const LootVisual := preload("res://scripts/util/loot_visual.gd")
 
 
 static func build(ctx: Dictionary) -> void:
@@ -16,29 +17,17 @@ static func build(ctx: Dictionary) -> void:
 	var placed: Array = ctx["placed"]
 	_add_base(parent, rect)
 	for slot in pattern["house_slots"]:
-		var house: Node3D = ctx["house_scenes"][rng.randi_range(0, ctx["house_scenes"].size() - 1)].instantiate()
-		house.scale = Vector3.ONE * float(ctx["house_scale"])
-		var depth := rng.randf_range(1.8, 3.6)
-		var jitter := rng.randf_range(-1.5, 1.5)
-		var side: int = slot[0]
-		var t: float = slot[1]
-		match side:
-			0:
-				house.position = Vector3(rect.position.x + rect.size.x * t + jitter, 0, rect.position.y + depth)
-				house.rotation.y = 0.0
-			1:
-				house.position = Vector3(rect.position.x + rect.size.x - depth, 0, rect.position.y + rect.size.y * t + jitter)
-				house.rotation.y = -PI * 0.5
-			2:
-				house.position = Vector3(rect.position.x + rect.size.x * t + jitter, 0, rect.position.y + rect.size.y - depth)
-				house.rotation.y = PI
-			3:
-				house.position = Vector3(rect.position.x + depth, 0, rect.position.y + rect.size.x * t + jitter)
-				house.rotation.y = PI * 0.5
+		var house: Node3D = _make_house(ctx, rng, rect, slot)
 		parent.add_child(house)
 		add_house_collider(house)
 		add_house_loot(house, ctx["tables"][rng.randi_range(0, ctx["tables"].size() - 1)], HOUSE_EMPTY_CHANCE)
 		placed.append("house:%.2f:%.2f:%.2f" % [house.position.x, house.position.z, house.rotation.y])
+	for slot in pattern.get("looted_house_slots", []):
+		var lh: Node3D = _make_house(ctx, rng, rect, slot)
+		parent.add_child(lh)
+		add_house_collider(lh)
+		LootVisual.apply_grayscale(lh)
+		placed.append("looted_house:%.2f:%.2f:%.2f" % [lh.position.x, lh.position.z, lh.rotation.y])
 	var trees := rng.randi_range(pattern["tree_range"].x, pattern["tree_range"].y)
 	for i in trees:
 		var tree: Node3D = ctx["tree_scene"].instantiate()
@@ -85,6 +74,69 @@ static func build(ctx: Dictionary) -> void:
 			car.global_position = pos
 			car.rotation.y = rot
 			placed.append("car:%.2f:%.2f:%.2f" % [pos.x, pos.z, rot])
+	var want_looted_cars := rng.randi_range(pattern["looted_car_count"].x, pattern["looted_car_count"].y)
+	if want_looted_cars > 0:
+		var lcar_sides: Array = []
+		for s in pattern.get("looted_car_sides", pattern.get("car_sides", [])):
+			if ctx["edge_check"].call(s):
+				lcar_sides.append(s)
+		if lcar_sides.size() > 0:
+			for idx in range(lcar_sides.size() - 1, 0, -1):
+				var k := rng.randi_range(0, idx)
+				var tmp = lcar_sides[k]
+				lcar_sides[k] = lcar_sides[idx]
+				lcar_sides[idx] = tmp
+			var rw2 := float(ctx["road_width"])
+			for c in mini(want_looted_cars, lcar_sides.size()):
+				var s: int = lcar_sides[c]
+				var t := rng.randf_range(0.3, 0.75)
+				var pos2: Vector3
+				var rot2 := 0.0
+				match s:
+					0:
+						pos2 = Vector3(rect.position.x + rect.size.x * t, 0, rect.position.y - rw2 * 0.5 + 1.2)
+						rot2 = PI * 0.5 if rng.randf() < 0.5 else -PI * 0.5
+					1:
+						pos2 = Vector3(rect.position.x + rect.size.x + rw2 * 0.5 - 1.2, 0, rect.position.y + rect.size.y * t)
+						rot2 = 0.0 if rng.randf() < 0.5 else PI
+					2:
+						pos2 = Vector3(rect.position.x + rect.size.x * t, 0, rect.position.y + rect.size.y + rw2 * 0.5 - 1.2)
+						rot2 = PI * 0.5 if rng.randf() < 0.5 else -PI * 0.5
+					3:
+						pos2 = Vector3(rect.position.x - rw2 * 0.5 + 1.2, 0, rect.position.y + rect.size.y * t)
+						rot2 = 0.0 if rng.randf() < 0.5 else PI
+				var lcar: Node3D = ctx["car_scene"].instantiate()
+				lcar.loot_table = null
+				parent.add_child(lcar)
+				lcar.global_position = pos2
+				lcar.rotation.y = rot2
+				lcar.searched = true
+				LootVisual.apply_grayscale(lcar)
+				placed.append("looted_car:%.2f:%.2f:%.2f" % [pos2.x, pos2.z, rot2])
+
+
+## 집 노드를 슬롯(side, t) 위치에 맞춰 생성한다. 활성 집·털린 집 배치에 공용.
+static func _make_house(ctx: Dictionary, rng: RandomNumberGenerator, rect: Rect2, slot: Array) -> Node3D:
+	var house: Node3D = ctx["house_scenes"][rng.randi_range(0, ctx["house_scenes"].size() - 1)].instantiate()
+	house.scale = Vector3.ONE * float(ctx["house_scale"])
+	var depth := rng.randf_range(1.8, 3.6)
+	var jitter := rng.randf_range(-1.5, 1.5)
+	var side: int = slot[0]
+	var t: float = slot[1]
+	match side:
+		0:
+			house.position = Vector3(rect.position.x + rect.size.x * t + jitter, 0, rect.position.y + depth)
+			house.rotation.y = 0.0
+		1:
+			house.position = Vector3(rect.position.x + rect.size.x - depth, 0, rect.position.y + rect.size.y * t + jitter)
+			house.rotation.y = -PI * 0.5
+		2:
+			house.position = Vector3(rect.position.x + rect.size.x * t + jitter, 0, rect.position.y + rect.size.y - depth)
+			house.rotation.y = PI
+		3:
+			house.position = Vector3(rect.position.x + depth, 0, rect.position.y + rect.size.x * t + jitter)
+			house.rotation.y = PI * 0.5
+	return house
 
 
 static func _add_tree_zone(parent: Node3D, tree: Node3D) -> void:

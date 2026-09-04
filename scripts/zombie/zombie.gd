@@ -29,6 +29,9 @@ const PERCEPTION_INTERVAL := 0.2
 @export var vision_radius := 10.0
 @export var fov_deg := 100.0
 @export var model_yaw_offset := PI
+## 플레이어로부터 이 거리보다 먼 좀비는 물리/AI 연산과 렌더링을 낮춘다(데이터·상태는 유지).
+## stage1 스폰러가 이 값을 좁혀 실제 게임에서 활성화한다. 기본은 무한이라 기본 동작(항상 활성)과 동일.
+@export var visibility_dist := 1e9
 ## -1이면 기본 외형(character-c), 0 이상이면 VARIANT_SCENES 인덱스
 @export var variant_index := -1
 
@@ -86,6 +89,10 @@ func _exit_tree() -> void:
 
 func _physics_process(delta: float) -> void:
 	if _dead:
+		return
+	# 플레이어 기반 반경 밖 좀비는 물리/AI 연산과 렌더링을 낮춘다(데이터·상태는 유지).
+	# 플레이어가 가까워지면 자동으로 재개된다. 카메라·플레이어가 없으면(스모크 테스트) 항상 활성.
+	if not _refocus_visibility():
 		return
 	_attack_cd -= delta
 	_lock_anim_t -= delta
@@ -276,6 +283,18 @@ func _get_player() -> Node:
 	if _player != null and is_instance_valid(_player):
 		return _player
 	return get_tree().get_first_node_in_group("player")
+
+
+## 플레이어 기반 반경 밖이면 물리/AI를 스킵하고 모델을 숨긴다(데이터·상태는 유지).
+## stage1 스폰러가 visibility_dist를 좁혔을 때만 동작하고, 기본(무한)은 항상 활성화해 회귀를 막는다.
+## 반환 true면 물리/AI를 계속 진행하고, false면 이 프레임은 생략한다.
+func _refocus_visibility() -> bool:
+	var p: Node3D = _get_player()
+	if p == null:
+		return true
+	var inside := global_position.distance_to(p.global_position) <= visibility_dist
+	_model.visible = inside
+	return inside
 
 
 func _do_attack_hit() -> void:

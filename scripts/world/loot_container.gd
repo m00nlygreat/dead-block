@@ -14,7 +14,9 @@ var searched := false
 
 
 func _ready() -> void:
-	add_to_group("containers")
+	# 룻 테이블이 없는 컨테이너(털린 장식 등)는 수색 대상으로 취급하지 않는다.
+	if loot_table != null:
+		add_to_group("containers")
 
 
 func can_interact() -> bool:

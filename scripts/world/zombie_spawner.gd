@@ -12,6 +12,9 @@ const ZOMBIE_SCENE := preload("res://scenes/zombie/zombie.tscn")
 ## 이 거리를 벗어난 좀비는 보상 없이 제거(카메라 최대 줌 13m의 화면 밖 거리).
 ## 상한(60)이 먼 좀비로 영구 채워져 스폰이 멎는 문제를 막는다.
 @export var despawn_dist := 40.0
+## 생성한 좀비의 가시 최적화 반경. 0 이하(기본)면 좀비 기본값(무한)을 유지한다.
+## 실제 게임 씬(stage1)에서 좁혀, 플레이어 반경 밖 좀비의 물리/AI·렌더링을 낮춘다.
+@export var visibility_dist := -1.0
 
 var _t := 0.0
 
@@ -52,6 +55,8 @@ func _try_spawn() -> void:
 			return
 		var z := ZOMBIE_SCENE.instantiate()
 		z.variant_index = randi_range(-1, Zombie.VARIANT_SCENES.size() - 1)
+		if visibility_dist > 0.0:
+			z.visibility_dist = visibility_dist
 		get_parent().add_child(z)
 		var offset := Vector3.ZERO
 		if i > 0:
