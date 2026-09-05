@@ -2,16 +2,19 @@ class_name SwingTrail
 extends MeshInstance3D
 
 ## 근접 휘두름 궤적/사거리 표시.
-## 휘두르는 동안 부채꼴 필(궤적)이 쓸리듯 펼쳐지고, 사거리 경계(바깥 호 +
+## 휘두르는 동안 부채꼴 필(궤적)이 바닥 위에서 쓸리듯 펼쳐지고, 사거리 경계(바깥 호 +
 ## 양쪽 측면선)를 밝은 선으로 그려 실제 판정 범위(reach/arc)를 드러낸다.
+## 바닥 밀착형: 소음 디스크(GROUND 0.15m) 바로 위(0.18~0.22m)에 겹쳐
+## 사람 → 궤적 → 소음 디스크 → 바닥 순서로 보인다.
 ## StandardMaterial3D(unshaded) + ImmediateMesh만 사용 — 웹(Compatibility) 호환.
 
 const SWEEP_TIME := 0.13
 const FADE_TIME := 0.24
 const STEPS := 20
 const INNER_FRAC := 0.4
-const INNER_Y := 0.1
-const OUTER_Y := 0.45
+## 바닥 밀착 높이 — 소음 디스크(발치+0.15m, 윗면 약 0.16m) 바로 위.
+const INNER_Y := 0.18
+const OUTER_Y := 0.22
 ## 필 바깥쪽 끝 알파 비율(안쪽 대비) — 사거리가 탑다운에서도 보이도록 진하게.
 const EDGE_KEEP := 0.45
 
@@ -31,8 +34,12 @@ func _ready() -> void:
 	mat.vertex_color_use_as_albedo = true
 	# 탑다운 카메라가 뒷면을 보므로 양면 렌더링이 필수.
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	# 바닥·벽에 가려지지 않고 사거리가 항상 보이도록 깊이 테스트를 끈다.
-	mat.no_depth_test = true
+	# 바닥 밀착 오버레이: 깊이 테스트는 켜고 쓰기만 끈다(POSTMORTEM 2026-09-02).
+	# 사람 → 궤적 → 소음 디스크 → 바닥 순서. 소음 디스크(render_priority 5)보다
+	# 늦게 그리도록 6으로 지정해 디스크 위로 겹친다.
+	mat.no_depth_test = false
+	mat.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+	mat.render_priority = 6
 	material_override = mat
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	visible = false
@@ -61,6 +68,13 @@ func play(reach: float, arc_deg: float, color: Color) -> void:
 	_active = true
 	visible = true
 	_rebuild(0.0)
+
+
+## 피격 시 공격 캔슬용 — 진행 중 궤적을 즉시 숨긴다.
+func stop() -> void:
+	_active = false
+	_t = 0.0
+	visible = false
 
 
 func _slice_dir(f: float) -> Vector3:

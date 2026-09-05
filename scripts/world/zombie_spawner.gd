@@ -173,12 +173,18 @@ func is_spawn_free(pos: Vector3) -> bool:
 
 
 ## 플레이어에서 멀어진 좀비를 보상 없이 제거하고 살아남은 목록을 돌려준다.
+## CHASE/ATTACK 중인 추적자는 chase_break_dist까지 유지(어그로 해제보다 먼저
+## 디스폰되면 55m 설정이 무의미해진다). 상한 강제 확보용 _pop_farthest는 예외 없이 동작.
 func _prune_far(player: Node3D) -> Array:
 	var keep: Array = []
 	for z in get_tree().get_nodes_in_group("zombies"):
 		if not is_instance_valid(z) or z.is_queued_for_deletion():
 			continue
-		if z.global_position.distance_to(player.global_position) > despawn_dist:
+		var limit := despawn_dist
+		var zb := z as Zombie
+		if zb != null and (zb.state == Zombie.State.CHASE or zb.state == Zombie.State.ATTACK):
+			limit = maxf(despawn_dist, zb.chase_break_dist)
+		if z.global_position.distance_to(player.global_position) > limit:
 			z.queue_free()
 		else:
 			keep.append(z)

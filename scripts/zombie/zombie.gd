@@ -31,7 +31,11 @@ const PERCEPTION_INTERVAL := 0.2
 @export var model_yaw_offset := PI
 ## 플레이어로부터 이 거리보다 먼 좀비는 물리/AI 연산과 렌더링을 낮춘다(데이터·상태는 유지).
 ## stage1 스폰러가 이 값을 좁혀 실제 게임에서 활성화한다. 기본은 무한이라 기본 동작(항상 활성)과 동일.
+## CHASE/ATTACK 중에는 아래 chase_break_dist까지 활성 유지(추적 중 슬립 방지).
 @export var visibility_dist := 1e9
+## CHASE/ATTACK 유지 한계 거리. 이 거리 밖으로 벗어나야 추적을 포기한다.
+## 전력질주로 16m만 벌리면 떨궈지던 문제를 막는다(중간값 55m).
+@export var chase_break_dist := 55.0
 ## -1이면 기본 외형(character-c), 0 이상이면 VARIANT_SCENES 인덱스
 @export var variant_index := -1
 
@@ -220,13 +224,15 @@ func take_damage(amount: float, from_pos: Vector3,
 		return
 	hp -= amount
 	HitFlash.flash(self)
+	## 피격 시 공격 모션/시도 캔슬(플레이어와 동일) — 경직 여부와 무관하게 무조건 취소.
+	_attack_windup = 0.0
+	_lock_anim_t = 0.0
 	var kb := global_position - from_pos
 	kb.y = 0.0
 	if knockback_speed > 0.0 and kb.length() > 0.01:
 		_knockback = kb.normalized() * knockback_speed
 	if stagger_time > _stagger_t:
 		_stagger_t = stagger_time
-		_attack_windup = 0.0
 	var p: Node3D = _get_player()
 	if p != null:
 		_player = p
@@ -269,7 +275,7 @@ func _perceive() -> void:
 	var aggro := state == State.CHASE or state == State.ATTACK
 
 	if aggro:
-		if d > vision_radius * 1.6:
+		if d > chase_break_dist:
 			state = State.IDLE
 		return
 
@@ -508,7 +514,14 @@ func _refocus_visibility() -> bool:
 	var p: Node3D = _get_player()
 	if p == null:
 		return true
-	var inside := global_position.distance_to(p.global_position) <= visibility_dist
+	# 추적 중이면 chase_break_dist 너머까지 활성 유지. 안 그러면 35m에서 얼어
+	# 어그로 해제(55m)까지 도달하지 못해 설정이 무의미해진다.
+	# 해제 판정(_perceive)이 돌 수 있게 +5m 여유를 둔다. 한계 밖이면 언 채로
+	# 굳지 않고 IDLE로 복귀한 뒤 일반(35/40m) 규칙을 따른다.
+	var limit := visibility_dist
+	if state == State.CHASE or state == State.ATTACK:
+		limit = maxf(visibility_dist, chase_break_dist + 5.0)
+	var inside := global_position.distance_to(p.global_position) <= limit
 	_model.visible = inside
 	return inside
 

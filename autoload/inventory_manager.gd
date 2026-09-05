@@ -182,6 +182,29 @@ func refill_magazine(id: String) -> void:
 	_refill_magazine(id)
 
 
+## 손에 든(장착 중) 근접 무기의 내구도를 최대치로 회복. 원거리 무기는 제외.
+## 가득 찼거나·무기 없음·원거리면 false.
+func repair_equipped_to_full() -> bool:
+	if equipped_weapon_id == "":
+		return false
+	var item = ItemDB.get_item(equipped_weapon_id)
+	if item == null or not item.is_weapon() or item.is_ranged:
+		return false
+	if item.durability <= 0:
+		return false
+	var slot_idx := _find_first_slot_of(equipped_weapon_id)
+	if slot_idx == -1:
+		return false
+	var cur: int = slots[slot_idx]["durability"]
+	if cur >= item.durability:
+		return false
+	slots[slot_idx]["durability"] = item.durability
+	equipped_durability = item.durability
+	inventory_changed.emit()
+	weapon_changed.emit()
+	return true
+
+
 func use_durability(id: String) -> void:
 	var item = ItemDB.get_item(id)
 	if item == null or count_of(id) <= 0:

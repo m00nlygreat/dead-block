@@ -5,6 +5,12 @@ usage: "중요한 결정, 새 사실, 범위 변경, 설계 방향 변경이 생
 
 # LOG
 
+## 2026-09-06 (안전가옥 손에 든 무기 수리 10코인 — 원거리 제외)
+
+- 사용자 요청: 안전가옥 중앙 구매에 손에 든 무기 내구도 회복(코인 10개) 추가, 원거리 무기 제외.
+- 구현: `InventoryManager.repair_equipped_to_full()`(장착 근접 무기만 최대치 회복, 원거리·풀내구·무기없음 false) + `upgrade_ui` 중앙에 수리 버튼(무기없음/원거리/풀내구/코인부족 비활성, `25/40 → 40/40` 표시, 실패 시 코인 환불). 권총은 기존 탄창 구매(7코인) 이용.
+- 검증: 신규 m76 7종 통과 + 전체 41/42(기존 m1 구형 미표기 제외).
+
 ## 2026-09-06 (웹 로딩 OOM — PCK 다이어트 + 런타임 할당 최적화)
 
 - 원인 ①: 웹 프리셋이 `export_filter="all_resources"` + `exclude_filter=""`라 Kenney 팩의 미사용 원본 포맷(FBX/OBJ/DAE/STL/MTL 88MB, Unitypackage, 미사용 OGG 236개, Preview PNG, tests/·tools/ 등)까지 PCK에 포함 — `index.pck` 70.22MB를 로딩 시 wasm 힙에 통째로 올려 OOM. 코드·씬은 `.glb`+`.otf`만 참조함을 grep으로 확인.

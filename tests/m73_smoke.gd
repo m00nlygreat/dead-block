@@ -50,14 +50,17 @@ func _run() -> void:
 
 	var trail: SwingTrail = player.get_node("SwingTrail")
 
-	# T1: 재질 설정 — 탑다운 카메라(뒷면 시점)에서도 보이고 바닥에 묻히지 않아야 한다.
+	# T1: 재질 설정 — 바닥 밀착 오버레이(사람 → 궤적 → 소음디스크 → 바닥).
+	# 깊이 테스트 켬 + 쓰기 끔 + 소음디스크(5)보다 높은 우선순위(6).
 	var mat: StandardMaterial3D = trail.material_override as StandardMaterial3D
 	var t1: bool = mat != null \
 		and mat.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED \
 		and mat.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA \
 		and mat.vertex_color_use_as_albedo \
 		and mat.cull_mode == BaseMaterial3D.CULL_DISABLED \
-		and mat.no_depth_test
+		and (not mat.no_depth_test) \
+		and mat.depth_draw_mode == BaseMaterial3D.DEPTH_DRAW_DISABLED \
+		and mat.render_priority > 5
 	print("T1_TRAIL_MATERIAL: ", t1)
 
 	# T2: play 상태.
@@ -149,6 +152,18 @@ func _run() -> void:
 	await _ticks(2)
 	t10 = t10 and is_equal_approx(trail.global_rotation.y, 1.0)
 	print("T10_FOLLOWS_FACING: ", t10)
+
+	# T11: 바닥 밀착 — 노드 Y≈발치, 지오메트리 Y가 소음 디스크(0.15) 위 좁은 밴드.
+	trail.play(2.0, 90.0, Color.WHITE)
+	trail._rebuild(SwingTrail.SWEEP_TIME)
+	var tab: AABB = trail._mesh.get_aabb()
+	var node_y: float = trail.position.y
+	var t11: bool = absf(node_y) < 0.05 \
+		and tab.position.y > 0.15 \
+		and tab.position.y < 0.21 \
+		and tab.end.y < 0.30
+	print("T11_FLOOR_ABOVE_NOISE: ", t11,
+		" (node_y=%.2f min.y=%.2f max.y=%.2f)" % [node_y, tab.position.y, tab.end.y])
 
 	print("M73_SMOKE_DONE")
 	get_tree().quit(0)

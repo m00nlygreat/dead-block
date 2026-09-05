@@ -17,6 +17,7 @@ const WAVE_KNOCKBACK := 12.0
 const SHOP_PRICES := {"bandage": 5, "water": 5}
 const AMMO_ID := "weapon_9mm"
 const AMMO_PRICE := 7
+const REPAIR_PRICE := 10
 const CRAFT_RECIPES := {
 	"weapon_blade": {"scrap_metal": 2, "cloth": 1},
 	"bandage": {"cloth": 2},
@@ -33,6 +34,7 @@ var _open_timer: Timer
 	"water": $Root/Columns/CenterCol/BuyWater as Button,
 }
 @onready var _buy_ammo_button: Button = $Root/Columns/CenterCol/BuyAmmo
+@onready var _buy_repair_button: Button = $Root/Columns/CenterCol/BuyRepair
 @onready var _craft_buttons: Dictionary = {
 	"weapon_blade": $Root/Columns/RightCol/CraftBlade as Button,
 	"bandage": $Root/Columns/RightCol/CraftBandage as Button,
@@ -55,11 +57,13 @@ func _ready() -> void:
 		var bb: Button = _buy_buttons[id]
 		bb.pressed.connect(_on_buy_pressed.bind(id))
 	_buy_ammo_button.pressed.connect(_on_buy_ammo_pressed)
+	_buy_repair_button.pressed.connect(_on_buy_repair_pressed)
 	for id in _craft_buttons:
 		var cb: Button = _craft_buttons[id]
 		cb.pressed.connect(_on_craft_pressed.bind(id))
 	GameState.coins_changed.connect(func(_t: int): _refresh_if_visible())
 	InventoryManager.inventory_changed.connect(func(): _refresh_if_visible())
+	InventoryManager.weapon_changed.connect(func(): _refresh_if_visible())
 	_open_timer = Timer.new()
 	_open_timer.one_shot = true
 	_open_timer.wait_time = OPEN_DELAY
@@ -196,6 +200,7 @@ func _refresh_shop() -> void:
 	]
 	_buy_ammo_button.disabled = not has_gun or GameState.coins < AMMO_PRICE
 	_buy_ammo_button.tooltip_text = "%d발로 보충" % mag_size if has_gun else "권총을 보유해야 구매할 수 있습니다"
+	_refresh_repair_button()
 	for id in _craft_buttons:
 		var b: Button = _craft_buttons[id]
 		var recipe: Dictionary = CRAFT_RECIPES[id]
@@ -209,6 +214,36 @@ func _refresh_shop() -> void:
 			parts.append("%s %d/%d" % [ItemDB.get_item(mat_id).display_name, have, need])
 		b.text = "%s 제작\n%s" % [item.display_name, "\n".join(parts)]
 		b.disabled = not ok
+
+
+## 손에 든 근접 무기 내구도 회복 버튼 갱신. 원거리 무기는 제외.
+func _refresh_repair_button() -> void:
+	var wid: String = InventoryManager.equipped_weapon_id
+	var item = InventoryManager.get_equipped_item()
+	if wid == "" or item == null or not item.is_weapon():
+		_buy_repair_button.text = "손에 든 무기 수리 · %d 코인\n무기 없음" % REPAIR_PRICE
+		_buy_repair_button.disabled = true
+		_buy_repair_button.tooltip_text = "무기를 손에 든 상태에서 구매할 수 있습니다"
+		return
+	if item.is_ranged:
+		_buy_repair_button.text = "손에 든 무기 수리 · %d 코인\n원거리 무기 제외" % REPAIR_PRICE
+		_buy_repair_button.disabled = true
+		_buy_repair_button.tooltip_text = "원거리 무기는 탄창 구매를 이용하세요"
+		return
+	var cur: int = InventoryManager.equipped_durability
+	var full: int = item.durability
+	if cur >= full:
+		_buy_repair_button.text = "%s 수리 · %d 코인\n내구도 최대 (%d/%d)" % [
+			item.display_name, REPAIR_PRICE, cur, full,
+		]
+		_buy_repair_button.disabled = true
+		_buy_repair_button.tooltip_text = "이미 내구도가 가득 찼습니다"
+		return
+	_buy_repair_button.text = "%s 수리 · %d 코인\n%d/%d → %d/%d" % [
+		item.display_name, REPAIR_PRICE, cur, full, full, full,
+	]
+	_buy_repair_button.disabled = GameState.coins < REPAIR_PRICE
+	_buy_repair_button.tooltip_text = "손에 든 무기의 내구도를 가득 회복합니다"
 
 
 func _on_card_pressed(index: int) -> void:
@@ -279,6 +314,23 @@ func _on_buy_ammo_pressed() -> void:
 	if not GameState.spend_coins(AMMO_PRICE):
 		return
 	InventoryManager.refill_magazine(AMMO_ID)
+	_refresh()
+
+
+## 손에 든 근접 무기 내구도 회복(10 코인). 원거리 무기 제외.
+## 수리할 내구도가 없으면 코인 환불.
+func _on_buy_repair_pressed() -> void:
+	if not visible:
+		return
+	var item = InventoryManager.get_equipped_item()
+	if item == null or not item.is_weapon() or item.is_ranged:
+		return
+	if InventoryManager.equipped_durability >= item.durability:
+		return
+	if not GameState.spend_coins(REPAIR_PRICE):
+		return
+	if not InventoryManager.repair_equipped_to_full():
+		GameState.add_coins(REPAIR_PRICE)
 	_refresh()
 
 

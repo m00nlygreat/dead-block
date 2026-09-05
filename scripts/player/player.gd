@@ -90,6 +90,8 @@ var _melee_cd := 0.0
 var _ranged_cd := 0.0
 var _invuln := 0.0
 var _lock_anim_t := 0.0
+## 근접 타격 예약 토큰 — 피격 시 증가시켜 대기 중인 _melee_hit을 무효화한다.
+var _melee_seq := 0
 var _regen_wait := 0.0
 var _hand: Node3D = null
 var _weapon_visual: Node3D = null
@@ -338,6 +340,7 @@ func take_damage(amount: float) -> void:
 		return
 	hp = maxf(hp - amount, 0.0)
 	_invuln = 0.45
+	_cancel_attack()
 	HitFlash.flash(self)
 	hp_changed.emit(hp, max_hp)
 	if hp <= 0.0:
@@ -650,10 +653,21 @@ func _melee_attack() -> void:
 		trail_color = KNIFE_TRAIL_COLOR if KNIFE_LIKE_IDS.has(item.id) else BAT_TRAIL_COLOR
 	_swing_trail.play(float(ws["reach"]), float(ws["arc"]), trail_color)
 	NoiseSystem.emit_melee_noise(global_position, sneaking)
-	get_tree().create_timer(float(ws["hit_delay"])).timeout.connect(_melee_hit.bind(ws))
+	_melee_seq += 1
+	get_tree().create_timer(float(ws["hit_delay"])).timeout.connect(_melee_hit.bind(ws, _melee_seq))
 
 
-func _melee_hit(ws: Dictionary) -> void:
+## 피격 시 공격 모션/시도 캔슬 — 대기 중인 타격 무효화 + 모션 잠금·궤적 중단.
+func _cancel_attack() -> void:
+	_melee_seq += 1
+	_lock_anim_t = 0.0
+	if is_instance_valid(_swing_trail):
+		_swing_trail.stop()
+
+
+func _melee_hit(ws: Dictionary, seq: int) -> void:
+	if seq != _melee_seq or _dead:
+		return
 	var fwd := -global_transform.basis.z
 	fwd.y = 0.0
 	fwd = fwd.normalized()
