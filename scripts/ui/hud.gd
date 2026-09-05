@@ -3,6 +3,7 @@ extends CanvasLayer
 const SLOT_COUNT := 20
 const HEAD_OFFSET := 2.15
 const BAR_GAP := 6.0
+const TOAST_HEAD_OFFSET := 2.6
 
 var _player: Node = null
 var _hp_connected := false
@@ -15,6 +16,8 @@ var _coin_label: Label
 var _material_label: Label
 var _kill_label: Label
 
+var _floating_toasts: Array = []
+
 @onready var _prompt: Label = $Root/Prompt
 @onready var _bar: ProgressBar = $Root/SearchBar
 @onready var _use_bar: ProgressBar = $Root/UseBar
@@ -24,7 +27,6 @@ var _kill_label: Label
 @onready var _thirst_bar: ProgressBar = $Root/ThirstBar
 @onready var _weapon_label: Label = $Root/WeaponLabel
 @onready var _weight_label: Label = $Root/WeightLabel
-@onready var _toasts: VBoxContainer = $Root/Toasts
 @onready var _panel: Panel = $Root/InvPanel
 @onready var _grid: GridContainer = $Root/InvPanel/Grid
 @onready var _hotbar: HBoxContainer = $Root/Hotbar
@@ -86,6 +88,7 @@ func _ready() -> void:
 	InventoryManager.inventory_changed.connect(_refresh_inventory)
 	InventoryManager.inventory_changed.connect(_refresh_materials)
 	InventoryManager.item_gained.connect(_on_item_gained)
+	InventoryManager.container_searched_empty.connect(_on_container_empty)
 	InventoryManager.weapon_changed.connect(_refresh_weapon)
 	InventoryManager.hotbar_changed.connect(_refresh_hotbar)
 	InventoryManager.selected_changed.connect(func(_i: int) -> void: _refresh_hotbar())
@@ -366,6 +369,9 @@ func _process(_delta: float) -> void:
 		_place_above_head(_use_bar)
 		_use_bar.value = _player.get_consume_ratio()
 
+	_place_prompt_below_feet()
+	_update_floating_toasts()
+
 	if Input.is_action_just_pressed("inventory"):
 		_panel.visible = not _panel.visible
 		_refresh_inventory()
@@ -378,6 +384,25 @@ func _place_above_head(bar: Control) -> void:
 		return
 	var head_screen: Vector2 = cam.unproject_position(_player.global_position + Vector3.UP * HEAD_OFFSET)
 	bar.position = head_screen + Vector2(-bar.size.x * 0.5, -bar.size.y - BAR_GAP)
+
+
+func _place_prompt_below_feet() -> void:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null or _player == null:
+		return
+	var foot_screen: Vector2 = cam.unproject_position(_player.global_position)
+	_prompt.position = foot_screen + Vector2(-_prompt.size.x * 0.5, BAR_GAP)
+
+
+func _update_floating_toasts() -> void:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null or _player == null:
+		return
+	var head_screen: Vector2 = cam.unproject_position(_player.global_position + Vector3.UP * TOAST_HEAD_OFFSET)
+	for i in _floating_toasts.size():
+		var toast: Label = _floating_toasts[i]
+		if is_instance_valid(toast):
+			toast.position = head_screen + Vector2(-toast.size.x * 0.5, -toast.size.y - BAR_GAP - i * (toast.size.y + BAR_GAP))
 
 
 func _on_player_died() -> void:
@@ -421,13 +446,26 @@ func _refresh_inventory() -> void:
 func _on_item_gained(id: String, qty: int) -> void:
 	var item = ItemDB.get_item(id)
 	var display: String = id if item == null else item.display_name
+	_show_floating_toast("+ %s ×%d" % [display, qty], ItemData.rarity_color(item.rarity) if item != null else Color.WHITE)
+
+
+func _on_container_empty() -> void:
+	_show_floating_toast("비어있음", Color(0.6, 0.6, 0.65))
+
+
+func _show_floating_toast(text: String, color: Color) -> void:
 	var toast := Label.new()
-	toast.text = "+ %s ×%d" % [display, qty]
+	toast.text = text
 	toast.add_theme_font_size_override("font_size", 20)
-	if item != null:
-		toast.self_modulate = ItemData.rarity_color(item.rarity)
-	_toasts.add_child(toast)
+	toast.self_modulate = color
+	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	$Root.add_child(toast)
+	_floating_toasts.append(toast)
 	var tw := create_tween()
 	tw.tween_interval(1.6)
 	tw.tween_property(toast, "modulate:a", 0.0, 0.5)
-	tw.tween_callback(toast.queue_free)
+	tw.tween_callback(func() -> void:
+		_floating_toasts.erase(toast)
+		if is_instance_valid(toast):
+			toast.queue_free()
+	)

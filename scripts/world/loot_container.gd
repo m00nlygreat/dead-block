@@ -39,6 +39,8 @@ func complete_interaction(_by: Node) -> void:
 			var added: int = InventoryManager.add_item(r.id, r.qty)
 			if added < r.qty:
 				_spawn_remainder(r.id, r.qty - added)
+	else:
+		InventoryManager.container_searched_empty.emit()
 
 
 ## 수색 완료를 오브젝트 색상으로 표현한다. 기본은 자신(차량) 서브트리.

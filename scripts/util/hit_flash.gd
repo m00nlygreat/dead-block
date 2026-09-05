@@ -12,9 +12,16 @@ static func flash(root: Node, duration := 0.12) -> void:
 
 	var meshes: Array = root.find_children("*", "MeshInstance3D", true, false)
 	var targets: Array = []
+	var originals: Dictionary = {}
 	for mi in meshes:
 		if mi.mesh != null and mi.mesh.get_surface_count() > 0:
 			targets.append(mi)
+			for i in mi.mesh.get_surface_count():
+				var orig: Material = mi.get_surface_override_material(i)
+				if orig == null:
+					orig = mi.mesh.surface_get_material(i)
+				originals[mi] = originals.get(mi, [])
+				originals[mi].append(orig)
 	if targets.is_empty():
 		return
 
@@ -28,5 +35,8 @@ static func flash(root: Node, duration := 0.12) -> void:
 			if not is_instance_valid(mi):
 				continue
 			for i in mi.mesh.get_surface_count():
-				mi.set_surface_override_material(i, null)
+				var orig_mat: Material = null
+				if originals.has(mi) and originals[mi].size() > i:
+					orig_mat = originals[mi][i]
+				mi.set_surface_override_material(i, orig_mat)
 	)

@@ -4,6 +4,22 @@ signal scrap_changed(new_scrap: int)
 
 const SAVE_PATH := "user://savegame.cfg"
 
+var _was_fullscreen := true
+
+
+func _ready() -> void:
+	var all := OS.get_cmdline_args() + OS.get_cmdline_user_args()
+	if "--windowed" in all:
+		_was_fullscreen = false
+		_set_windowed()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo \
+			and event.keycode == KEY_F11:
+		_toggle_fullscreen()
+		get_viewport().set_input_as_handled()
+
 var scrap: int = 0
 var unlocked_perks: Array[String] = []
 var best_extraction_value: int = 0
@@ -72,3 +88,24 @@ func load_save() -> void:
 	scrap = cfg.get_value("meta", "scrap", 0)
 	unlocked_perks = cfg.get_value("meta", "unlocked_perks", [])
 	best_extraction_value = cfg.get_value("meta", "best_extraction_value", 0)
+
+
+func _toggle_fullscreen() -> void:
+	if _was_fullscreen:
+		_set_windowed()
+	else:
+		_set_fullscreen()
+
+
+func _set_fullscreen() -> void:
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
+	_was_fullscreen = true
+
+
+func _set_windowed() -> void:
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, false)
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_size(Vector2i(1280, 720))
+	DisplayServer.window_set_position(DisplayServer.screen_get_position() + (DisplayServer.screen_get_size() - Vector2i(1280, 720)) / 2)
+	_was_fullscreen = false

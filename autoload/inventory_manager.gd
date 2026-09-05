@@ -2,6 +2,7 @@ extends Node
 
 signal inventory_changed
 signal item_gained(id: String, qty: int)
+signal container_searched_empty
 signal weapon_changed
 signal hotbar_changed
 signal selected_changed(index: int)
