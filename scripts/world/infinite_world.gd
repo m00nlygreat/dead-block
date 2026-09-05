@@ -32,6 +32,8 @@ var _pattern_cache: Dictionary = {}
 var _player: Node3D = null
 var _t := 0.0
 var _mats: Dictionary = {}
+var _base_mat: StandardMaterial3D
+var _base_mesh: BoxMesh
 var _floor_body: StaticBody3D
 var _ground_mi: MeshInstance3D
 
@@ -50,6 +52,14 @@ func _ready() -> void:
 	_mats["cross"].roughness = 1.0
 	_mats["dash"].albedo_color = Color(0.85, 0.85, 0.8)
 	_mats["dash"].roughness = 1.0
+	# 블록 바닥은 모든 청크가 같은 크기라 메시·재질을 공유한다.
+	# (청크마다 BoxMesh·StandardMaterial3D를 새로 만들면 로드/언로드 반복에
+	# 리소스가 계속 쌓여 웹에서 메모리를 압박한다.)
+	_base_mat = StandardMaterial3D.new()
+	_base_mat.albedo_color = Color(0.45, 0.48, 0.42)
+	_base_mat.roughness = 1.0
+	_base_mesh = BoxMesh.new()
+	_base_mesh.size = Vector3(block_size, 0.04, block_size)
 	_floor_body = StaticBody3D.new()
 	_floor_body.collision_layer = 1
 	var cs := CollisionShape3D.new()
@@ -105,6 +115,10 @@ func _update_stream() -> void:
 			var node: Node3D = _loaded[key]
 			node.queue_free()
 			_loaded.erase(key)
+			# 패턴 캐시는 무한 월드에서 무제한 증가하므로 언로드 시 함께 비운다.
+			# (재방문하면 결정론 RNG로 동일 패턴이 다시 뽑힌다.)
+			if key.begins_with("b_"):
+				_pattern_cache.erase(key.substr(2))
 	for key in want:
 		if not _loaded.has(key):
 			var node := _build_for_key(key)
@@ -168,6 +182,8 @@ func _build_block(bx: int, bz: int) -> Node3D:
 		"house_scale": house_scale,
 		"tree_scale": tree_scale,
 		"road_width": road_width,
+		"base_mesh": _base_mesh,
+		"base_mat": _base_mat,
 		"edge_check": func(side: int) -> bool: return _side_active(bx, bz, side),
 		"placed": [],
 	}

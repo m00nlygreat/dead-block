@@ -15,7 +15,7 @@ static func build(ctx: Dictionary) -> void:
 	var pattern: Dictionary = ctx["pattern"]
 	var parent: Node3D = ctx["parent"]
 	var placed: Array = ctx["placed"]
-	_add_base(parent, rect)
+	_add_base(parent, rect, ctx)
 	for slot in pattern["house_slots"]:
 		var house: Node3D = _make_house(ctx, rng, rect, slot)
 		parent.add_child(house)
@@ -149,15 +149,27 @@ static func _add_tree_zone(parent: Node3D, tree: Node3D) -> void:
 	zone.radius = clampf(maxf(ab.size.x, ab.size.z) * 0.5 + 0.3, 0.8, 3.0)
 
 
-static func _add_base(parent: Node3D, rect: Rect2) -> void:
+static var _shared_base_mesh: BoxMesh
+static var _shared_base_mat: StandardMaterial3D
+
+
+static func _add_base(parent: Node3D, rect: Rect2, ctx: Dictionary) -> void:
 	var mi := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = Vector3(rect.size.x, 0.04, rect.size.y)
-	mi.mesh = bm
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.45, 0.48, 0.42)
-	mat.roughness = 1.0
-	mi.material_override = mat
+	# 실게임은 infinite_world가 공유 메시·재질을 넘기고, 구 ctx(테스트)는
+	# 정적 공유본으로 폴백한다. 어느 쪽도 청크마다 새로 만들지 않는다.
+	if ctx.has("base_mesh") and ctx.has("base_mat"):
+		mi.mesh = ctx["base_mesh"]
+		mi.material_override = ctx["base_mat"]
+	else:
+		if _shared_base_mesh == null:
+			_shared_base_mesh = BoxMesh.new()
+			_shared_base_mesh.size = Vector3(rect.size.x, 0.04, rect.size.y)
+		if _shared_base_mat == null:
+			_shared_base_mat = StandardMaterial3D.new()
+			_shared_base_mat.albedo_color = Color(0.45, 0.48, 0.42)
+			_shared_base_mat.roughness = 1.0
+		mi.mesh = _shared_base_mesh
+		mi.material_override = _shared_base_mat
 	parent.add_child(mi)
 	mi.global_position = Vector3(rect.position.x + rect.size.x * 0.5, 0.02, rect.position.y + rect.size.y * 0.5)
 

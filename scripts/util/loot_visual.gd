@@ -5,6 +5,25 @@ extends RefCounted
 
 const GRAY_SHADER := preload("res://resources/shaders/search_grayscale.gdshader")
 
+# 같은 GLB를 쓰는 집·차량은 베이스 색·텍스처가 같으므로 그레이 재질을 공유한다.
+# (표면마다 ShaderMaterial.new()를 하면 털린 구조물 수백 개 분량이
+# 청크 스트리밍마다 쌓여 웹 메모리를 압박한다.)
+static var _gray_cache: Dictionary = {}
+
+
+static func _gray_for(tex: Texture2D, col: Color) -> ShaderMaterial:
+	var tex_id := 0
+	if tex != null:
+		tex_id = tex.get_instance_id()
+	var key := "%d|%s" % [tex_id, col.to_html()]
+	if not _gray_cache.has(key):
+		var rep := ShaderMaterial.new()
+		rep.shader = GRAY_SHADER
+		rep.set_shader_parameter("albedo_tex", tex)
+		rep.set_shader_parameter("base_color", col)
+		_gray_cache[key] = rep
+	return _gray_cache[key]
+
 
 static func apply_grayscale(root: Node3D) -> void:
 	for mi in root.find_children("*", "MeshInstance3D", true, false):
@@ -15,11 +34,7 @@ static func apply_grayscale(root: Node3D) -> void:
 			var base: Material = m.mesh.surface_get_material(s)
 			if base is StandardMaterial3D:
 				var sm := base as StandardMaterial3D
-				var rep := ShaderMaterial.new()
-				rep.shader = GRAY_SHADER
-				rep.set_shader_parameter("albedo_tex", sm.albedo_texture)
-				rep.set_shader_parameter("base_color", sm.albedo_color)
-				m.set_surface_override_material(s, rep)
+				m.set_surface_override_material(s, _gray_for(sm.albedo_texture, sm.albedo_color))
 
 
 ## root 서브트리에 그레이스케일 오버라이드가 적용됐는지 검사(테스트용).

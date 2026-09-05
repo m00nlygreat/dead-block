@@ -37,6 +37,10 @@ const SPAWN_PROBE_HEIGHT := 0.65
 const CENTER_TRIES := 12
 const MEMBER_TRIES := 8
 
+## 스폰 안전 검사 프로브 형태. 쿼리마다 new하면 스폰 사이클당 수십 개씩
+## 할당되므로 하나로 공유한다(트랜스폼은 쿼리마다 새로 지정).
+static var _probe_shape: SphereShape3D
+
 var _t := 0.0
 
 
@@ -157,10 +161,11 @@ func is_spawn_free(pos: Vector3) -> bool:
 	if player == null:
 		return true
 	var space: PhysicsDirectSpaceState3D = player.get_world_3d().direct_space_state
-	var shape := SphereShape3D.new()
-	shape.radius = SPAWN_CLEAR_RADIUS
+	if _probe_shape == null:
+		_probe_shape = SphereShape3D.new()
+		_probe_shape.radius = SPAWN_CLEAR_RADIUS
 	var q: PhysicsShapeQueryParameters3D = PhysicsShapeQueryParameters3D.new()
-	q.shape = shape
+	q.shape = _probe_shape
 	q.transform = Transform3D(Basis(), pos + Vector3.UP * SPAWN_PROBE_HEIGHT)
 	# 건물·차량은 world 레이어(1)를 공유하므로 마스크 1로 검사한다.
 	q.collision_mask = 1

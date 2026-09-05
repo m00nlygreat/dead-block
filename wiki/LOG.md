@@ -5,6 +5,15 @@ usage: "중요한 결정, 새 사실, 범위 변경, 설계 방향 변경이 생
 
 # LOG
 
+## 2026-09-06 (웹 로딩 OOM — PCK 다이어트 + 런타임 할당 최적화)
+
+- 원인 ①: 웹 프리셋이 `export_filter="all_resources"` + `exclude_filter=""`라 Kenney 팩의 미사용 원본 포맷(FBX/OBJ/DAE/STL/MTL 88MB, Unitypackage, 미사용 OGG 236개, Preview PNG, tests/·tools/ 등)까지 PCK에 포함 — `index.pck` 70.22MB를 로딩 시 wasm 힙에 통째로 올려 OOM. 코드·씬은 `.glb`+`.otf`만 참조함을 grep으로 확인.
+- 수정(A, `export_presets.cfg` 웹 프리셋만): `exclude_filter="*.fbx, *.obj, *.dae, *.stl, *.mtl, *.unitypackage, *.ogg, *.wav, *.mp3, *.svg, *.html, *.url, *.txt, *Preview*.png, *Unity samples*, *tests/*, *tools/*"`. 로컬 웹 export 실측 **70.22MB → 23.69MB(66% 감소)**.
+- 원인 ②(플레이 중 증가형, B): `_pattern_cache` 무제한 증가(언로드 시 미삭제), 블록 바닥·도로 박스·그레이 재질을 청크/표면마다 `new()` — 스트리밍 반복에 리소스 누적. 수정: 언로드 시 패턴 캐시 함께 삭제, 바닥 메시·재질 공유(`infinite_world`→`block_chunk`, 구 ctx 테스트는 정적 폴백), 도로 BoxMesh 규격별 공유(`road_chunk`), 그레이 ShaderMaterial을 텍스처+색상 키로 공유(`loot_visual`, 동작·색상 동일).
+- 원인 ③(C, `zombie.gd`·`zombie_spawner.gd`): 좀비마다 매 물리 프레임 좀비 전수 분리 스캔 + 트리존 전수 스캔 + 스폰 프로브 Shape 할당 — 싱글스레드 웹에서 O(n²) 할당 폭증. 수정: 분리 0.2초·수관 0.25초 캐시(수치는 그대로, 판정 지연 ≤0.25초), 수관은 위치 0.5m 이상 이동 시 즉시 재검사, 스폰 프로브 SphereShape 공유. 최적화 중 m54 T4가 깨졌다가(직접 `_steer` 연속 호출 시 캐시가 구 위치 판정을 재사용) 위치 기반 무효화로 복구.
+- 검증: 관련 9종(m35/m41/m44/m61/m67/m70/m71/m72/m74) + 전체 41종 스모크 통과. m38 T3/T4/T6·m39 T1·m42 T2 false는 수정 전후 동일(기존 실패, 이번 범위 밖). 헤드리스 Dummy 셰이더 경고·안전가옥 람다 경고는 기존 무해 경고와 동일.
+- 다음: 커밋·푸시 시 GitHub Actions 재배포 후 `https://m00nlygreat.github.io/dead-block/` 로딩 확인 필요. Windows 데스크톱 프리셋은 손대지 않음.
+
 ## 2026-09-05 (업그레이드 체감 개편 — 3단계·큰폭·근접공용)
 
 - 문제: 피해 +15%는 TTK를 안 바꿈(배트 30→34.5, HP60 기준 계속 2타). 쿨 −8%·이속 +8%는 역치 이하, 배트 한정 3종은 타 빌드에 죽은 카드.

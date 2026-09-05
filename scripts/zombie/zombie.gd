@@ -52,6 +52,11 @@ const DETOUR_ANGLE := 75.0
 const STEER_MAX_TURN_DEG := 240.0
 ## WANDER 목표가 벽 안에 박혔을 때 무한 박치기 방지용 타임아웃
 const WANDER_TIMEOUT := 6.0
+## 분리·수관 감속 조회 캐시 주기. 매 물리 프레임 전수 스캔하면
+## 좀비 수 제곱으로 그룹 조회·배열 할당이 늘어나 싱글스레드 웹에서
+## 메모리·프레임을 압박하므로 짧게 캐시한다(판정 지연 ≤0.25초).
+const SEP_CACHE_INTERVAL := 0.2
+const TREE_CACHE_INTERVAL := 0.25
 
 var hp := 60.0
 var state: int = State.IDLE
@@ -79,6 +84,11 @@ var _avoid_sign := 0.0
 ## 스무딩된 실제 이동 방향. 프레임 뒤집힘을 흡수한다.
 var _steer_dir := Vector3.ZERO
 var _wander_t := 0.0
+var _sep_cache := Vector3.ZERO
+var _sep_t := 0.0
+var _tree_slow := false
+var _tree_t := 0.0
+var _tree_pos := Vector3(1e9, 0.0, 0.0)
 
 var _anim: AnimationPlayer
 
@@ -304,16 +314,26 @@ func _steer(target: Vector3, speed: float, delta: float) -> void:
 	# 전방 world 장애물이 막고 있으면 우회 각도 중 뚫린 방향을 쓴다.
 	# 막힌 동안은 같은 쪽을 유지(히스테리시스)해 좌우 뒤집힘을 막는다.
 	dir = _avoid_obstacle(dir)
-	# 뭉친 좀비를 옆으로 밀어 겹침·정체를 푼다.
-	var sep: Vector3 = _separation_vector()
-	var desired: Vector3 = dir + sep * 0.8
+	# 뭉친 좀비를 옆으로 밀어 겹침·정체를 푼다. 전수 스캔이라 짧게 캐시한다.
+	_sep_t -= delta
+	if _sep_t <= 0.0:
+		_sep_t = SEP_CACHE_INTERVAL
+		_sep_cache = _separation_vector()
+	var desired: Vector3 = dir + _sep_cache * 0.8
 	if desired.length() < 0.01:
 		desired = dir
 	desired = desired.normalized()
 	# 급반전 방지: 지속 조향 방향을 프레임당 제한각만큼만 틀어 덜덜거림을 막는다.
 	_steer_dir = _smooth_turn(_steer_dir, desired, delta)
 	_face_towards(global_position + _steer_dir, delta)
-	var mult := TREE_SLOW_MULT if TreeZone.slows(self) else 1.0
+	# 수관 감속 존 전수 스캔이라 짧게 캐시한다. 위치가 크게 바뀌면
+	#(텔레포트·스폰 직후 등) 타이머와 무관하게 즉시 다시 검사한다.
+	_tree_t -= delta
+	if _tree_t <= 0.0 or global_position.distance_to(_tree_pos) > 0.5:
+		_tree_t = TREE_CACHE_INTERVAL
+		_tree_pos = global_position
+		_tree_slow = TreeZone.slows(self)
+	var mult := TREE_SLOW_MULT if _tree_slow else 1.0
 	velocity = _steer_dir * speed * mult + _knockback
 
 
