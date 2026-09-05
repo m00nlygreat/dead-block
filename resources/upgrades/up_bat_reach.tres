@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "up_bat_reach"
-display_name = "배트 연장"
-description = "야구배트 사거리 +0.4m. 배트 장착 중에만 적용."
+display_name = "리치 연장"
+description = "근접 무기 사거리 +0.4m. 칼·주먹 포함 전부 적용."
 max_level = 3
 cost = 12
 weight = 8.0

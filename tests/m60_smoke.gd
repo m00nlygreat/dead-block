@@ -118,11 +118,11 @@ func _run() -> void:
 	player.apply_upgrade("bat_reach", 0.4)
 	player.apply_upgrade("bat_targets", 1.0)
 	ws = player._get_weapon_stats()
-	var bat_gate_ok: bool = is_equal_approx(float(ws["reach"]), 1.8) \
-		and int(ws["targets"]) == 1
+	var melee_universal_ok: bool = is_equal_approx(float(ws["reach"]), 2.2) \
+		and int(ws["targets"]) == 2
 	player.apply_upgrade("bat_reach", -0.4)
 	player.apply_upgrade("bat_targets", -1.0)
-	print("T13_BAT_UPGRADE_NOT_ON_KNIFE: ", bat_gate_ok)
+	print("T13_MELEE_UPGRADE_ON_KNIFE: ", melee_universal_ok)
 
 	var z: Zombie = ZOMBIE_SCENE.instantiate()
 	w.add_child(z)

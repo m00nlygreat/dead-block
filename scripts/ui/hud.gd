@@ -15,6 +15,7 @@ var _slot_sb_selected: StyleBoxFlat
 var _coin_label: Label
 var _material_label: Label
 var _kill_label: Label
+var _last_safehouse_sec := -1
 
 var _floating_toasts: Array = []
 
@@ -35,6 +36,7 @@ var _floating_toasts: Array = []
 
 
 func _ready() -> void:
+	add_to_group("hud")
 	_slot_sb_normal = StyleBoxFlat.new()
 	_slot_sb_normal.bg_color = Color(0.12, 0.12, 0.15, 0.85)
 	_slot_sb_normal.set_corner_radius_all(6)
@@ -103,17 +105,22 @@ func _ready() -> void:
 	_material_label.anchor_bottom = 1.0
 	_material_label.offset_left = 20
 	_material_label.offset_right = 900
-	_material_label.offset_top = -222
+	_material_label.offset_top = -330
 	_material_label.offset_bottom = -192
 	_material_label.add_theme_font_size_override("font_size", 18)
 	_material_label.self_modulate = Color(0.8, 0.85, 1.0)
 	$Root.add_child(_material_label)
+	_style_bar(_hp_bar, Color(0.85, 0.28, 0.28))
+	_style_bar(_hunger_bar, Color(0.95, 0.6, 0.2))
+	_style_bar(_thirst_bar, Color(0.3, 0.6, 1.0))
+	_style_bar(_stamina_bar, Color(0.35, 0.85, 0.4))
 	_add_bar_label(_hunger_bar, "허기")
 	_add_bar_label(_thirst_bar, "갈증")
 	_build_kill_display()
 	UpgradeManager.kills_changed.connect(_on_kills_changed)
-	GameState.coins_changed.connect(func(_c: int) -> void: _on_kills_changed(UpgradeManager.kills))
-	_on_kills_changed(UpgradeManager.kills)
+	UpgradeManager.safehouse_visits_changed.connect(func(_v: int) -> void: _refresh_safehouse_label())
+	GameState.coins_changed.connect(func(_c: int) -> void: _refresh_safehouse_label())
+	_refresh_safehouse_label()
 	_refresh_inventory()
 	_refresh_weapon()
 	_refresh_hotbar()
@@ -185,12 +192,22 @@ func _init_item_info_panel() -> void:
 	InventoryManager.selected_changed.connect(func(_i: int) -> void: _refresh_item_info())
 
 
-func _on_kills_changed(kills: int) -> void:
+func _on_kills_changed(_kills: int) -> void:
+	_refresh_safehouse_label()
+
+
+func _refresh_safehouse_label() -> void:
 	if _kill_label == null:
 		return
-	var to_next: int = UpgradeManager.KILLS_PER_SPAWN \
-		- (kills % UpgradeManager.KILLS_PER_SPAWN)
-	_kill_label.text = "처치 %d · 다음 안전가옥 %d킬" % [kills, to_next]
+	var remain: int = int(ceil(UpgradeManager.time_to_safehouse))
+	var phase: int = mini(UpgradeManager.safehouse_visits / 3, 3) + 1
+	_kill_label.text = "처치 %d · 안전가옥 %d/%d · 다음 %d초 · %d단계" % [
+		UpgradeManager.kills,
+		UpgradeManager.safehouse_visits,
+		UpgradeManager.SAFEHOUSE_VISITS_TO_CLEAR,
+		maxi(remain, 0),
+		phase,
+	]
 
 
 func _on_coins_changed(total: int) -> void:
@@ -205,9 +222,21 @@ func _refresh_materials() -> void:
 		if item != null:
 			parts.append("%s ×%d" % [item.display_name, InventoryManager.count_of(id)])
 	if parts.size() > 0:
-		_material_label.text = "재료: " + "  ".join(parts)
+		_material_label.text = "재료:\n" + "\n".join(parts)
 	else:
 		_material_label.text = ""
+
+
+## 생존 바(체력·허기·갈증·스태미너)에 고유 색상을 입힌다.
+func _style_bar(bar: ProgressBar, fill_color: Color) -> void:
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color(0.1, 0.1, 0.12, 0.8)
+	bg.set_corner_radius_all(4)
+	bar.add_theme_stylebox_override("background", bg)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = fill_color
+	fill.set_corner_radius_all(4)
+	bar.add_theme_stylebox_override("fill", fill)
 
 
 func _add_bar_label(bar: ProgressBar, txt: String) -> void:
@@ -323,6 +352,10 @@ func _refresh_item_info() -> void:
 		dur_label.visible = true
 	else:
 		dur_label.visible = false
+	## 배경이 수량·내구도를 모두 감싸고 바닥에 붙도록 높이를 내용에 맞춘다.
+	var panel_h := 168.0 if max_dur > 0 else 148.0
+	_item_info_panel.offset_top = -12.0 - panel_h
+	_item_info_panel.offset_bottom = -12.0
 
 
 func _process(_delta: float) -> void:
@@ -335,6 +368,11 @@ func _process(_delta: float) -> void:
 		_player = get_tree().get_first_node_in_group("player")
 	if _player == null:
 		return
+
+	var sec := int(ceil(UpgradeManager.time_to_safehouse))
+	if sec != _last_safehouse_sec:
+		_last_safehouse_sec = sec
+		_refresh_safehouse_label()
 
 	if not _hp_connected and _player.has_signal("hp_changed"):
 		_hp_connected = true
@@ -451,6 +489,11 @@ func _on_item_gained(id: String, qty: int) -> void:
 
 func _on_container_empty() -> void:
 	_show_floating_toast("비어있음", Color(0.6, 0.6, 0.65))
+
+
+## 업그레이드 구매 등 외부 알림용 공개 토스트
+func show_toast(text: String, color := Color.WHITE) -> void:
+	_show_floating_toast(text, color)
 
 
 func _show_floating_toast(text: String, color: Color) -> void:

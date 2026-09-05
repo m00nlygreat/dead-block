@@ -102,15 +102,18 @@ var _consume_progress := 0.0
 var _footstep_timer := 0.0
 const FOOTSTEP_INTERVAL := 0.2
 
-## 런 한정 성장 배율(XpManager 레벨업 업그레이드로 증가)
+## 런 한정 성장 배율(안전가옥 업그레이드로 증가)
 var move_speed_mult := 1.0
 var damage_mult := 1.0
+## 고정 피해 보너스(타수 돌파용 — 배율과 별개로 합산)
+var damage_flat := 0.0
 var cooldown_mult := 1.0
 var stamina_regen_mult := 1.0
 var pickup_radius_mult := 1.0
-var bat_reach_bonus := 0.0
-var bat_targets_bonus := 0
-var bat_knockback_mult := 1.0
+## 근접 공용 보너스(무기 종류·주먹 불문)
+var melee_reach_bonus := 0.0
+var melee_targets_bonus := 0
+var melee_knockback_mult := 1.0
 
 var sneaking := false
 var _crouch_t := 0.0
@@ -174,6 +177,8 @@ func apply_upgrade(effect_id: String, value: float) -> void:
 			move_speed_mult += value / 100.0
 		"damage":
 			damage_mult += value / 100.0
+		"damage_flat":
+			damage_flat += value
 		"cooldown":
 			cooldown_mult = maxf(cooldown_mult - value / 100.0, 0.5)
 		"pickup_radius":
@@ -182,11 +187,11 @@ func apply_upgrade(effect_id: String, value: float) -> void:
 		"stamina_regen":
 			stamina_regen_mult += value / 100.0
 		"bat_reach":
-			bat_reach_bonus += value
+			melee_reach_bonus += value
 		"bat_targets":
-			bat_targets_bonus += int(round(value))
+			melee_targets_bonus += int(round(value))
 		"bat_knockback":
-			bat_knockback_mult += value / 100.0
+			melee_knockback_mult += value / 100.0
 
 
 func _update_pickup_radius() -> void:
@@ -569,16 +574,15 @@ func _get_weapon_stats() -> Dictionary:
 		## 빈 권총(장탄 0)은 주먹 평타 스탯 사용(REQUIREMENT.md)
 		if item.is_ranged and InventoryManager.equipped_durability <= 0:
 			return _fist_stats()
-		## 배트 강화 업그레이드는 배트 장착 중에만 적용(REQUIREMENT.md)
-		var is_bat: bool = item.id == "weapon_bat"
+		## 근접 강화 업그레이드는 무기 종류 불문(칼·주먹 포함) 적용
 		return {
-			"damage": item.damage * damage_mult,
-			"reach": item.reach + (bat_reach_bonus if is_bat else 0.0),
+			"damage": item.damage * damage_mult + damage_flat,
+			"reach": item.reach + melee_reach_bonus,
 			"arc": item.arc_deg,
-			"targets": item.max_targets + (bat_targets_bonus if is_bat else 0),
+			"targets": item.max_targets + melee_targets_bonus,
 			"cooldown": item.attack_cooldown * cooldown_mult,
 			"hit_delay": KNIFE_HIT_DELAY if KNIFE_LIKE_IDS.has(item.id) else BAT_HIT_DELAY,
-			"knockback": item.knockback * (bat_knockback_mult if is_bat else 1.0),
+			"knockback": item.knockback * melee_knockback_mult,
 			"stagger": item.stagger_time,
 		}
 	return _fist_stats()
@@ -586,10 +590,10 @@ func _get_weapon_stats() -> Dictionary:
 
 func _fist_stats() -> Dictionary:
 	return {
-		"damage": MELEE_DAMAGE * damage_mult,
-		"reach": MELEE_REACH,
+		"damage": MELEE_DAMAGE * damage_mult + damage_flat,
+		"reach": MELEE_REACH + melee_reach_bonus,
 		"arc": MELEE_ARC_DEG,
-		"targets": 1,
+		"targets": 1 + melee_targets_bonus,
 		"cooldown": MELEE_COOLDOWN * cooldown_mult,
 		"hit_delay": MELEE_HIT_DELAY,
 		"knockback": 0.0,
@@ -617,9 +621,9 @@ func _ranged_attack(item) -> void:
 		muzzle,
 		fwd,
 		item.projectile_speed,
-		item.damage * damage_mult,
+		item.damage * damage_mult + damage_flat,
 		item.headshot_chance,
-		item.knockback * (bat_knockback_mult if item.id == "weapon_bat" else 1.0),
+		item.knockback * melee_knockback_mult,
 		item.stagger_time,
 		item.reach
 	)

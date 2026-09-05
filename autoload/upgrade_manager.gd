@@ -1,19 +1,27 @@
 extends Node
 
-## 처치 수 기반 성장 관리:
-## 좀비를 처치하면 카운트가 쌓이고, 일정 처치 수(KILLS_PER_SPAWN)마다
-## 업그레이드 화면(안전가옥)이 곧바로 열린다(UpgradeUI가 kills_changed 구독).
+## 시간 기반 성장 관리:
+## 런 시작 후 SAFEHOUSE_INTERVAL(120초)마다 업그레이드 화면(안전가옥)이
+## 열린다(UpgradeUI가 safehouse_due 구독). 제한 시간 안에 수색(룻·재료)과
+## 사냥(코인)을 저울질하는 구조. kills는 전적·밸런스 지표로만 유지된다.
 ## 열린 화면에서 업그레이드를 코인으로 구매해 즉시 적용한다.
 ## 구매 내역은 런 한정(사망·추출 시 reset_run으로 초기화).
 
 signal kills_changed(kills: int)
 signal upgrade_applied(upgrade: UpgradeData)
+signal safehouse_due
+signal safehouse_visits_changed(visits: int)
 
 const UPGRADE_DIR := "res://resources/upgrades"
 const KILLS_PER_SPAWN := 10
 const CHOICE_COUNT := 3
+## 안전가옥 개방 간격(초) · 1스테이지 종료까지 방문 횟수
+const SAFEHOUSE_INTERVAL := 120.0
+const SAFEHOUSE_VISITS_TO_CLEAR := 10
 
 var kills := 0
+var time_to_safehouse := SAFEHOUSE_INTERVAL
+var safehouse_visits := 0
 var upgrade_levels := {}
 ## 이번 안전가옥 방문에서 이미 구매한 업그레이드 id 목록
 var _purchased_this_visit: Array[String] = []
@@ -45,9 +53,35 @@ func _load_pool() -> void:
 	_pool.sort_custom(func(a: UpgradeData, b: UpgradeData) -> bool: return a.id < b.id)
 
 
+func _process(delta: float) -> void:
+	var tree := get_tree()
+	if tree == null or tree.paused:
+		return
+	if tree.get_first_node_in_group("player") == null:
+		return
+	var ui: Node = tree.get_first_node_in_group("upgrade_ui")
+	if ui != null and (ui as CanvasLayer).visible:
+		return
+	time_to_safehouse -= delta
+	if time_to_safehouse <= 0.0:
+		time_to_safehouse = SAFEHOUSE_INTERVAL
+		safehouse_due.emit()
+
+
 func add_kill() -> void:
 	kills += 1
 	kills_changed.emit(kills)
+
+
+## 안전가옥이 실제로 열렸을 때 UI가 호출 — 방문 횟수 누적
+func notify_safehouse_opened() -> void:
+	safehouse_visits += 1
+	safehouse_visits_changed.emit(safehouse_visits)
+
+
+## 스모크 테스트용: 다음 개방까지 남은 시간을 강제로 당긴다
+func debug_force_due(in_sec: float = 0.05) -> void:
+	time_to_safehouse = in_sec
 
 
 func upgrade_level(id: String) -> int:
@@ -108,9 +142,12 @@ func draw_choices() -> Array[UpgradeData]:
 
 func reset_run() -> void:
 	kills = 0
+	time_to_safehouse = SAFEHOUSE_INTERVAL
+	safehouse_visits = 0
 	upgrade_levels.clear()
 	visit_over()
 	kills_changed.emit(kills)
+	safehouse_visits_changed.emit(safehouse_visits)
 
 
 ## 안전가옥 닫힘 시 호출: 이번 방문 구매 내역 초기화

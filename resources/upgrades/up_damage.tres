@@ -6,9 +6,9 @@
 script = ExtResource("1")
 id = "up_damage"
 display_name = "강타"
-description = "공격 피해 +15%."
-max_level = 5
+description = "공격 피해 +10 (고정)."
+max_level = 3
 cost = 20
 weight = 10.0
-effect_id = "damage"
-values = Array[float]([15.0, 15.0, 15.0, 15.0, 15.0])
+effect_id = "damage_flat"
+values = Array[float]([10.0, 10.0, 10.0])

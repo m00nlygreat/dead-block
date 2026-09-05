@@ -6,9 +6,9 @@
 script = ExtResource("1")
 id = "up_max_hp"
 display_name = "생명력 단련"
-description = "최대 HP +20. 선택 즉시 HP도 20 회복된다."
-max_level = 5
+description = "최대 HP +30. 선택 즉시 HP도 30 회복된다."
+max_level = 3
 cost = 12
 weight = 10.0
 effect_id = "max_hp"
-values = Array[float]([20.0, 20.0, 20.0, 20.0, 20.0])
+values = Array[float]([30.0, 30.0, 30.0])

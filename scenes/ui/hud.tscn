@@ -165,9 +165,9 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -300.0
-offset_top = -200.0
+offset_top = -180.0
 offset_right = -20.0
-offset_bottom = -100.0
+offset_bottom = -12.0
 
 [node name="InvPanel" type="Panel" parent="Root"]
 visible = false

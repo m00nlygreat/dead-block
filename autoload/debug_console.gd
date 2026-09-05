@@ -273,6 +273,7 @@ func _register_commands() -> void:
 	_cmd("god", "무적 모드 토글", _cmd_god)
 	_cmd("speed", "이동속도 배율 [배율]", _cmd_speed)
 	_cmd("kills", "처치 수 설정 [수치]", _cmd_kills)
+	_cmd("phase", "난이도 페이즈 확인/변경 [1~4]", _cmd_phase)
 	_cmd("zombie", "좀비 스폰 [n]", _cmd_zombie)
 	_cmd("scene", "씬 목록 / 재시작", _cmd_scene)
 	_cmd("reload", "런 초기화 후 재시작", _cmd_reload)
@@ -400,6 +401,32 @@ func _cmd_kills(args: Array) -> String:
 	UpgradeManager.kills = amount
 	UpgradeManager.kills_changed.emit(amount)
 	return "처치 수 → %d" % amount
+
+
+func _cmd_phase(args: Array) -> String:
+	if args.size() > 1:
+		var n := clampi(int(args[1]), 1, 4)
+		UpgradeManager.safehouse_visits = (n - 1) * 3
+		UpgradeManager.safehouse_visits_changed.emit(UpgradeManager.safehouse_visits)
+	var visits: int = UpgradeManager.safehouse_visits
+	var phase: int = mini(visits / 3, 3) + 1
+	var extra := _phase_spawn_info()
+	return "난이도 %d단계 (안전가옥 %d회)%s" % [phase, visits, extra]
+
+
+## 현재 씬의 스포너 실효값(간격·상한·호드 가중치)을 조회한다.
+## 스포너가 없으면(메뉴 등) 빈 문자열.
+func _phase_spawn_info() -> String:
+	var scene := get_tree().current_scene
+	if scene == null:
+		return ""
+	var spawner: Node = scene.find_child("ZombieSpawner", true, false)
+	if spawner == null or not spawner.has_method("current_phase"):
+		return ""
+	var p: int = spawner.current_phase()
+	var w: Array = spawner.phase_horde_weights(p)
+	return " — 스폰 간격 %.1f초·상한 %d·호드 %s" % [
+		spawner.phase_interval(p), spawner.phase_max(p), str(w)]
 
 
 func _cmd_zombie(args: Array) -> String:

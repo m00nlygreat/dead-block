@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "up_bat_knockback"
 display_name = "강풍 타격"
-description = "야구배트 밀려남 +50%. 배트 장착 중에만 적용."
+description = "근접 무기 밀려남 +50%. 기본값이 있는 무기에 적용."
 max_level = 2
 cost = 10
 weight = 6.0

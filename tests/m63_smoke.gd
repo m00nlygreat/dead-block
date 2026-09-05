@@ -1,7 +1,7 @@
 extends Node
 
-## m63: 안전가옥 1초 지연 개방 검증.
-## 마일스톤 킬 직후에는 열리지 않고(마지막 코인 회수 시간 확보),
+## m63: 안전가옥 시간 기반 1초 지연 개방 검증.
+## 타이머 만료 직후에는 열리지 않고(날아오는 코인 회수 시간 확보),
 ## 약 1초 뒤에 개방된다. 지연 중 리셋되면 개방이 취소된다.
 
 const PLAYER_SCENE := preload("res://scenes/player/player.tscn")
@@ -53,7 +53,15 @@ func _run() -> void:
 	GameState.add_coins(100)
 	for i in 10:
 		UpgradeManager.add_kill()
-	print("T1_NO_INSTANT_OPEN: ",
+	await _ticks(30)
+	print("T1_KILLS_DO_NOT_OPEN: ",
+		UpgradeManager.kills == 10 and not ui.visible and not get_tree().paused,
+		" (kills=%d visible=%s paused=%s)" % [
+			UpgradeManager.kills, str(ui.visible), str(get_tree().paused)])
+
+	UpgradeManager.debug_force_due()
+	await _ticks(2)
+	print("T1B_NO_INSTANT_OPEN: ",
 		not ui.visible and not get_tree().paused,
 		" (visible=%s paused=%s)" % [str(ui.visible), str(get_tree().paused)])
 
@@ -77,8 +85,7 @@ func _run() -> void:
 	UpgradeManager.reset_run()
 	await _ticks(2)
 	GameState.spend_coins(GameState.coins)
-	for i in 10:
-		UpgradeManager.add_kill()
+	UpgradeManager.debug_force_due()
 	UpgradeManager.reset_run()
 	var opened_anyway: bool = await _wait_until(
 		func() -> bool: return ui.visible or get_tree().paused, 140)

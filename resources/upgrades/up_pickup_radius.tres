@@ -6,9 +6,9 @@
 script = ExtResource("1")
 id = "up_pickup_radius"
 display_name = "자석 장갑"
-description = "코인 자석 흡수 반경 +30%. 기본 0.4m."
-max_level = 5
+description = "코인 자석 흡수 반경 +50%. 기본 0.4m."
+max_level = 3
 cost = 8
 weight = 10.0
 effect_id = "pickup_radius"
-values = Array[float]([30.0, 30.0, 30.0, 30.0, 30.0])
+values = Array[float]([50.0, 50.0, 50.0])

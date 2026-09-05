@@ -6,9 +6,9 @@
 script = ExtResource("1")
 id = "up_stamina_regen"
 display_name = "폐활량 훈련"
-description = "스테미나 회복 +20%."
-max_level = 5
+description = "스테미나 회복 +35%."
+max_level = 3
 cost = 8
 weight = 10.0
 effect_id = "stamina_regen"
-values = Array[float]([20.0, 20.0, 20.0, 20.0, 20.0])
+values = Array[float]([35.0, 35.0, 35.0])

@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "up_bat_targets"
 display_name = "광역 타격"
-description = "야구배트 타점 +1. 배트 장착 중에만 적용."
+description = "근접 무기 타점 +1. 칼·주먹 포함 전부 적용."
 max_level = 2
 cost = 25
 weight = 6.0

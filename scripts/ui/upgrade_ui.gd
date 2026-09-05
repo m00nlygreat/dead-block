@@ -1,8 +1,8 @@
 extends CanvasLayer
 
-## 안전가옥 = 업그레이드 화면. 물리 건물이 아니라 처치 마일스톤
-## (KILLS_PER_SPAWN 배수) 도달 약 1초 후에 열리는 상점 화면이다.
-## 지연은 마지막 격파 좀비의 코인 회수 시간을 확보하기 위한 것이다.
+## 안전가옥 = 업그레이드 화면. 물리 건물이 아니라 시간 기반
+## (SAFEHOUSE_INTERVAL 경과) 약 1초 후에 열리는 상점 화면이다.
+## 지연은 날아오는 코인 회수 시간을 확보하기 위한 것이다.
 ## 화면은 3분할: 좌 업그레이드 카드(세로) / 중 구매(코인) / 우 제작(재료).
 ## 떠나기 버튼·ESC로 닫으면 게임이 재개된다.
 
@@ -66,15 +66,18 @@ func _ready() -> void:
 	_open_timer.timeout.connect(_try_open_pending)
 	add_child(_open_timer)
 	_leave_button.pressed.connect(_close)
-	UpgradeManager.kills_changed.connect(_on_kills_changed)
+	UpgradeManager.safehouse_due.connect(_on_safehouse_due)
+	UpgradeManager.kills_changed.connect(_on_run_reset_cancel)
 
 
-func _on_kills_changed(kills: int) -> void:
+func _on_safehouse_due() -> void:
+	_open_timer.start()
+
+
+## 런 리셋(사망·재시작, kills==0) 시 지연 중 개방 예약을 취소한다
+func _on_run_reset_cancel(kills: int) -> void:
 	if kills <= 0:
 		_open_timer.stop()
-		return
-	if kills % UpgradeManager.KILLS_PER_SPAWN == 0:
-		_open_timer.start()
 
 
 func _try_open_pending() -> void:
@@ -83,9 +86,6 @@ func _try_open_pending() -> void:
 		return
 	var hp_v = p.get("hp")
 	if hp_v != null and hp_v <= 0.0:
-		return
-	if UpgradeManager.kills <= 0 \
-			or UpgradeManager.kills % UpgradeManager.KILLS_PER_SPAWN != 0:
 		return
 	try_open()
 
@@ -96,6 +96,7 @@ func try_open() -> bool:
 	_choices = UpgradeManager.draw_choices()
 	if _choices.is_empty():
 		return false
+	UpgradeManager.notify_safehouse_opened()
 	get_tree().paused = true
 	visible = true
 	_refresh()
@@ -206,17 +207,57 @@ func _refresh_shop() -> void:
 			var need: int = recipe[mat_id]
 			ok = ok and have >= need
 			parts.append("%s %d/%d" % [ItemDB.get_item(mat_id).display_name, have, need])
-		b.text = "%s 제작\n%s" % [item.display_name, " + ".join(parts)]
+		b.text = "%s 제작\n%s" % [item.display_name, "\n".join(parts)]
 		b.disabled = not ok
 
 
 func _on_card_pressed(index: int) -> void:
 	if index >= _choices.size() or _choices[index] == null:
 		return
-	if not UpgradeManager.purchase(_choices[index].id):
+	var bought: UpgradeData = _choices[index]
+	if not UpgradeManager.purchase(bought.id):
 		return
 	_choices[index] = null
 	_refresh()
+	_show_purchase_toast(bought)
+
+
+## 구매 즉시 수치를 토스트로 노출(체감용)
+func _show_purchase_toast(u: UpgradeData) -> void:
+	var lv := UpgradeManager.upgrade_level(u.id)
+	var line := _effect_line(u)
+	var hud: Node = get_tree().get_first_node_in_group("hud")
+	if hud != null and hud.has_method("show_toast"):
+		hud.show_toast("구매: %s Lv%d/%d — %s" % [u.display_name, lv, u.max_level, line])
+
+
+func _effect_line(u: UpgradeData) -> String:
+	var lv := UpgradeManager.upgrade_level(u.id)
+	if lv <= 0 or lv > u.values.size():
+		return u.description.split("\n")[0]
+	var v: float = u.values[lv - 1]
+	match u.effect_id:
+		"damage_flat":
+			return "피해 +%d" % int(v)
+		"damage":
+			return "피해 +%d%%" % int(v)
+		"cooldown":
+			return "쿨다운 −%d%%" % int(v)
+		"move_speed":
+			return "이속 +%d%%" % int(v)
+		"max_hp":
+			return "최대HP +%d" % int(v)
+		"pickup_radius":
+			return "자석 +%d%%" % int(v)
+		"stamina_regen":
+			return "스테미나 회복 +%d%%" % int(v)
+		"bat_reach":
+			return "사거리 +%.1fm" % v
+		"bat_targets":
+			return "타점 +%d" % int(v)
+		"bat_knockback":
+			return "밀려남 +%d%%" % int(v)
+	return u.description.split("\n")[0]
 
 
 func _on_buy_pressed(id: String) -> void:

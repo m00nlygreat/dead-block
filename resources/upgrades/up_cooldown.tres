@@ -6,9 +6,9 @@
 script = ExtResource("1")
 id = "up_cooldown"
 display_name = "전투 리듬"
-description = "공격 쿨다운 -8%."
-max_level = 5
+description = "공격 쿨다운 -12%."
+max_level = 3
 cost = 10
 weight = 10.0
 effect_id = "cooldown"
-values = Array[float]([8.0, 8.0, 8.0, 8.0, 8.0])
+values = Array[float]([12.0, 12.0, 12.0])

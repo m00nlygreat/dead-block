@@ -1,5 +1,9 @@
 extends Node
 
+## m59: 안전가옥 시간 기반 개방 검증 (120초 타이머).
+## 킬을 쌓아도 열리지 않고, 타이머 만료(safehouse_due) 약 1초 후에 열린다.
+## 코인 구매·잔고 비활성·닫기 재개·재개방·킬 카운트·코인 자석·리셋을 확인한다.
+
 const PLAYER_SCENE := preload("res://scenes/player/player.tscn")
 const ZOMBIE_SCENE := preload("res://scenes/zombie/zombie.tscn")
 const COIN_SCENE := preload("res://scenes/items/coin_pickup.tscn")
@@ -57,10 +61,17 @@ func _run() -> void:
 		UpgradeManager.kills == 9 and not ui.visible and not get_tree().paused)
 
 	UpgradeManager.add_kill()
+	await _ticks(30)
+	print("T3A_TENTH_KILL_DOES_NOT_OPEN: ",
+		UpgradeManager.kills == 10 and not ui.visible and not get_tree().paused,
+		" (kills=%d visible=%s paused=%s)" % [
+			UpgradeManager.kills, str(ui.visible), str(get_tree().paused)])
+
+	UpgradeManager.debug_force_due()
 	var not_instant: bool = not ui.visible and not get_tree().paused
 	var opened: bool = await _wait_until(
 		func() -> bool: return ui.visible and get_tree().paused, 200)
-	print("T3_TENTH_KILL_OPENS_SCREEN: ",
+	print("T3B_TIMER_DUE_OPENS_SCREEN: ",
 		not_instant and opened and ui._choices.size() == 3,
 		" (instant=%s visible=%s paused=%s cards=%d)" % [
 			str(not not_instant), str(ui.visible), str(get_tree().paused),
@@ -87,14 +98,13 @@ func _run() -> void:
 		not get_tree().paused and not ui.visible,
 		" (paused=%s visible=%s)" % [str(get_tree().paused), str(ui.visible)])
 
-	for i in 10:
-		UpgradeManager.add_kill()
+	UpgradeManager.debug_force_due()
 	var reopened: bool = await _wait_until(
 		func() -> bool: return ui.visible and get_tree().paused, 200)
-	print("T7_REOPENS_AT_NEXT_MILESTONE: ",
-		reopened and UpgradeManager.kills == 20,
-		" (kills=%d visible=%s paused=%s)" % [
-			UpgradeManager.kills, str(ui.visible), str(get_tree().paused)])
+	print("T7_REOPENS_ON_NEXT_DUE: ",
+		reopened and UpgradeManager.safehouse_visits >= 2,
+		" (visits=%d visible=%s paused=%s)" % [
+			UpgradeManager.safehouse_visits, str(ui.visible), str(get_tree().paused)])
 	ui._close()
 	await _ticks(2)
 
@@ -121,7 +131,8 @@ func _run() -> void:
 
 	UpgradeManager.reset_run()
 	print("T10_RESET_RUN: ", UpgradeManager.kills == 0
-		and UpgradeManager.upgrade_levels.is_empty())
+		and UpgradeManager.upgrade_levels.is_empty()
+		and UpgradeManager.safehouse_visits == 0)
 
 	print("M59_SMOKE_DONE")
 	get_tree().quit(0)
