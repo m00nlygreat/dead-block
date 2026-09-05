@@ -3,10 +3,10 @@ extends Object
 
 const CLIP_NAME := "attack-knife-stab"
 const TRACKS := [
-	"character-a/root/torso",
-	"character-a/root/head",
-	"character-a/root/torso/arm-right",
-	"character-a/root/torso/arm-left",
+	"character-a/root/hip/torso",
+	"character-a/root/hip/torso/neck/head",
+	"character-a/root/hip/torso/arm-right",
+	"character-a/root/hip/torso/arm-left",
 ]
 
 const TORSO_KEYS := [
@@ -69,12 +69,12 @@ static func register(anim_player: AnimationPlayer) -> bool:
 
 static func _keys_for(path: String) -> Array:
 	match path:
-		"character-a/root/torso":
+		"character-a/root/hip/torso":
 			return TORSO_KEYS
-		"character-a/root/head":
+		"character-a/root/hip/torso/neck/head":
 			return HEAD_KEYS
-		"character-a/root/torso/arm-right":
+		"character-a/root/hip/torso/arm-right":
 			return ARM_R_KEYS
-		"character-a/root/torso/arm-left":
+		"character-a/root/hip/torso/arm-left":
 			return ARM_L_KEYS
 	return []

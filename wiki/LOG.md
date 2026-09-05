@@ -5,6 +5,16 @@ usage: "중요한 결정, 새 사실, 범위 변경, 설계 방향 변경이 생
 
 # LOG
 
+## 2026-09-05 (은신 허리 숙임 재설계 — hip/neck 피벗)
+
+- 사용자 확인으로 기존 은신 시각 효과(모델 하강 + torso 회전)가 "뒤로 꺾인다"는 지적 발생. 원인·해결을 통해 **피벗 노드 기반 허리 숙임**으로 전면 재작성.
+- **진짜 원인 규명**: Godot `type=2` 애니메이션 트랙은 위치가 아니라 **쿼터니언 회전 트랙**이었음(키 `(0,0,0,-1)` 형태). 모든 애니메이션은 torso/head/arm의 회전을 매 프레임 덮어쓰므로 코드의 `_torso.rotation.x`가 즉시 소거됐던 것(왼손 좌표계에서 X 부호도 뒤**로** 숙이는 방향).
+- **해결**: gltf exporter를 통하지 않고(피벗 노드는 트랜스폼 애니메이션 없어 안전함) glb에 **허리(hip, y=1.0)·목(neck, y=1.9) 빈 노드 피벗**을 추가. 은신 시 `hip.rotation.x=+0.55`(상체 숙임) + `neck.rotation.x=-0.55`(**머리만 반대로 보상 → 정면 유지**).
+- **Blender exporter 함정(중요)**: glTF exporter는 axis변환 시 mesh node의 base transform을 **원본 값 그대로** 저장(원래 torso 0.7, head 1.2이었던 트랜스폼이 hip/neck이 끼어도 부모 상대 +0.7/+1.2로 저장됨). 피벗 노드(empty)만 location 반영. → Godot에서 `_setup_model_pivots()`로 hip/torso/neck/head 로컬을 명시 재설정해 월드 좌표를 0.7/1.9/1.9로 유지.
+- **Godot import 캐시 함정(중요)**: 한번 깨진 glb(JSON 재직렬 실패)가 같은 경로에 남으면 성공한 exporter 출력으로 교체해도 "Failed loading resource"가 유지된다. 파일명을 바꾸면 로드되는 것으로 판별 → `.import`·`.godot/imported/character-a.glb-*` 삭제 후 재import로 해결.
+- 배트/나이프 스윙은 런타임 생성 애니메이션의 하드코딩 노드 경로(`character-a/root/torso…`)를 hip/neck 경로로 갱신(`bat_swing.gd`·`knife_stab.gd`).
+- 검증: hip/neck 노드 존재, 상체 숙임 시 head 앞 0.47m·하강 0.38m·**정면 방향 유지**, m1 스모크(이동·walk·sprint) PASS, 배트/나이프 트랙 4개 정상 + arm 회전 확인.
+
 ## 2026-09-04 (털린 구조물 — 탐색 필드 밀도 보강)
 
 - 사용자 요청: "이미 털린" 집/차량 구조물을 추가해 화면을 빽빽하게 채우고, 가시 범위(무한 월드 스트리밍) 렌더링에 포함. 협의 결과 **무한 월드 스트리밍 포함 + 처음부터 그레이스케일·수색 불가(장식용)** 확정.

@@ -67,7 +67,8 @@ const CROUCH_MODEL_Y := -0.25
 const CROUCH_COLLISION_HEIGHT := 0.9
 const CROUCH_COLLISION_Y := 0.45
 const CROUCH_LERP_SPEED := 10.0
-const CROUCH_TORSO_X := -0.55
+const CROUCH_HIP_X := 0.55
+const CROUCH_NECK_X := -CROUCH_HIP_X
 
 @export var model_yaw_offset := PI
 @export var max_hp := 100.0
@@ -118,7 +119,19 @@ var _crouch_t := 0.0
 @onready var _interact_area: Area3D = $InteractArea
 @onready var _swing_trail: SwingTrail = $SwingTrail
 @onready var _pickup_attractor: Area3D = $PickupAttractor
+@onready var _hip: Node3D = _model.find_child("hip", true, false)
+@onready var _neck: Node3D = _model.find_child("neck", true, false)
+@onready var _head: Node3D = _model.find_child("head", true, false)
 @onready var _torso: Node3D = _model.find_child("torso", true, false)
+
+
+func _setup_model_pivots() -> void:
+	if _hip == null or _torso == null or _neck == null or _head == null:
+		return
+	_hip.position.y = 1.0
+	_torso.position.y = -0.3
+	_neck.position.y = 1.2
+	_head.position.y = 0.0
 
 
 func _ready() -> void:
@@ -128,6 +141,7 @@ func _ready() -> void:
 	hunger = max_hunger
 	thirst = max_thirst
 	_model.rotation.y = model_yaw_offset
+	_setup_model_pivots()
 	_ground_model.call_deferred()
 	_anim = find_child("AnimationPlayer", true, false)
 	if _anim == null:
@@ -289,8 +303,10 @@ func _update_crouch_visual(delta: float) -> void:
 	var target := 1.0 if sneaking else 0.0
 	_crouch_t = move_toward(_crouch_t, target, CROUCH_LERP_SPEED * delta)
 	_model.position.y = lerpf(0.0, CROUCH_MODEL_Y, _crouch_t)
-	if _torso != null:
-		_torso.rotation.x = lerpf(0.0, CROUCH_TORSO_X, _crouch_t)
+	if _hip != null:
+		_hip.rotation.x = lerpf(0.0, CROUCH_HIP_X, _crouch_t)
+	if _neck != null:
+		_neck.rotation.x = lerpf(0.0, CROUCH_NECK_X, _crouch_t)
 	var cs: CollisionShape3D = $Collision
 	if cs.shape is CapsuleShape3D:
 		cs.shape.height = lerpf(1.3, CROUCH_COLLISION_HEIGHT, _crouch_t)
@@ -328,8 +344,10 @@ func _die() -> void:
 	sneaking = false
 	_crouch_t = 0.0
 	_model.position.y = 0.0
-	if _torso != null:
-		_torso.rotation.x = 0.0
+	if _hip != null:
+		_hip.rotation.x = 0.0
+	if _neck != null:
+		_neck.rotation.x = 0.0
 	velocity = Vector3.ZERO
 	died.emit()
 	if _anim != null and _anim.has_animation("die"):
