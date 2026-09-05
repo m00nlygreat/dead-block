@@ -6,14 +6,17 @@ signal died(zombie: Zombie)
 const COIN_SCENE := preload("res://scenes/items/coin_pickup.tscn")
 ## 재활용 업그레이드 습득 시 스크랩 드롭 확률
 const SALVAGE_CHANCE := 0.1
-## 외형 변형 후보(플레이어 character-a, 기본값 character-c 제외)
+## 외형 변형 후보: 전부 좀비 스킨. 기본값 character-l(Kenney 좀비 1호),
+## 나머지는 character-o(Kenney 좀비 2호) + assets/zombies/ 커스텀 5종
+## (l/o 리그·애니메이션 그대로, 텍스처만 변형 — 로블록스식 블로키 유지).
+## 플레이어 character-a와 시민/로봇 스킨은 사용하지 않는다.
 const VARIANT_SCENES := [
-	preload("res://assets/blocky-characters/Models/GLB format/character-d.glb"),
-	preload("res://assets/blocky-characters/Models/GLB format/character-e.glb"),
-	preload("res://assets/blocky-characters/Models/GLB format/character-f.glb"),
-	preload("res://assets/blocky-characters/Models/GLB format/character-g.glb"),
-	preload("res://assets/blocky-characters/Models/GLB format/character-i.glb"),
-	preload("res://assets/blocky-characters/Models/GLB format/character-k.glb"),
+	preload("res://assets/blocky-characters/Models/GLB format/character-o.glb"),
+	preload("res://assets/zombies/zombie-rot.glb"),
+	preload("res://assets/zombies/zombie-bruised.glb"),
+	preload("res://assets/zombies/zombie-bloody.glb"),
+	preload("res://assets/zombies/zombie-pale.glb"),
+	preload("res://assets/zombies/zombie-moss.glb"),
 ]
 
 enum State { IDLE, WANDER, CHASE, ATTACK, DEAD }
@@ -36,7 +39,7 @@ const PERCEPTION_INTERVAL := 0.2
 ## CHASE/ATTACK 유지 한계 거리. 이 거리 밖으로 벗어나야 추적을 포기한다.
 ## 전력질주로 16m만 벌리면 떨궈지던 문제를 막는다(중간값 55m).
 @export var chase_break_dist := 55.0
-## -1이면 기본 외형(character-c), 0 이상이면 VARIANT_SCENES 인덱스
+## -1이면 기본 외형(character-l 좀비), 0 이상이면 VARIANT_SCENES 인덱스
 @export var variant_index := -1
 
 ## 나무 수관 통과 시 이동 감속 배율

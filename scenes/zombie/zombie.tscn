@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/zombie/zombie.gd" id="1"]
-[ext_resource type="PackedScene" path="res://assets/blocky-characters/Models/GLB format/character-c.glb" id="2"]
+[ext_resource type="PackedScene" path="res://assets/blocky-characters/Models/GLB format/character-l.glb" id="2"]
 
 [sub_resource type="CapsuleShape3D" id="shape"]
 radius = 0.35
